@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh">
   <head>
     <meta charset="UTF-8" />
-    <title>Necro Summoner — Prototype v0.1</title>
+    <title>Necro Summoner — v0.2 Action</title>
     <style>
       * {
         box-sizing: border-box;
@@ -16,19 +16,18 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 16px;
+        padding: 12px;
         min-height: 100vh;
       }
       h1 {
         font-size: 18px;
         letter-spacing: 2px;
-        margin-bottom: 4px;
         color: #b89860;
       }
       .subtitle {
         font-size: 12px;
-        opacity: 0.5;
-        margin-bottom: 12px;
+        opacity: 0.55;
+        margin-bottom: 8px;
       }
       #wrap {
         display: flex;
@@ -36,17 +35,18 @@
         align-items: flex-start;
       }
       canvas {
-        background: #1a1a22;
+        background: #0a0a0e;
         border: 1px solid #3a3a4a;
         image-rendering: pixelated;
+        cursor: crosshair;
       }
       #panel {
-        width: 220px;
+        width: 240px;
         background: #16161e;
         border: 1px solid #3a3a4a;
         padding: 12px;
         font-size: 12px;
-        line-height: 1.6;
+        line-height: 1.55;
       }
       .stat {
         display: flex;
@@ -60,193 +60,501 @@
         border-top: 1px dashed #3a3a4a;
         margin: 8px 0;
       }
-      button {
-        width: 100%;
+      .key {
+        display: inline-block;
         background: #2a2a36;
-        color: #d8d4c8;
         border: 1px solid #4a4a5a;
-        padding: 6px 8px;
-        margin: 3px 0;
-        font-family: inherit;
-        cursor: pointer;
-        text-align: left;
-        font-size: 12px;
-      }
-      button:hover:not(:disabled) {
-        background: #3a3a4a;
-        border-color: #b89860;
-      }
-      button:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-      }
-      .cost {
-        float: right;
-        color: #8a7a4a;
+        padding: 1px 6px;
+        margin: 0 2px;
+        font-size: 11px;
       }
       #log {
-        height: 110px;
+        height: 130px;
         overflow-y: auto;
         font-size: 11px;
         background: #0d0d12;
         padding: 6px;
         border: 1px solid #3a3a4a;
-        margin-top: 8px;
+        margin-top: 6px;
       }
-      #log div {
-        opacity: 0.85;
-      }
-      .wave-banner {
-        color: #c84040;
-        font-size: 13px;
+      .banner {
         text-align: center;
-        margin: 8px 0;
+        font-size: 14px;
+        color: #c84040;
+        margin: 6px 0;
+        min-height: 18px;
       }
-      #status {
-        font-size: 11px;
-        opacity: 0.6;
-        margin-top: 8px;
+      #levelup {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+      #levelup.show {
+        display: flex;
+      }
+      #levelup .box {
+        background: #1a1a22;
+        border: 2px solid #b89860;
+        padding: 24px;
+        max-width: 560px;
+        text-align: center;
+      }
+      #levelup h2 {
+        color: #b89860;
+        font-size: 20px;
+        margin-bottom: 14px;
+      }
+      #levelup .perks {
+        display: flex;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .perk {
+        flex: 1;
+        background: #2a2a36;
+        border: 1px solid #4a4a5a;
+        padding: 14px;
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1.5;
+        text-align: left;
+      }
+      .perk:hover {
+        background: #3a3a4a;
+        border-color: #b89860;
+      }
+      .perk b {
+        color: #b89860;
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+      }
+      .perk .desc {
+        opacity: 0.85;
       }
     </style>
   </head>
   <body>
     <h1>NECRO SUMMONER</h1>
-    <div class="subtitle">prototype v0.1 — 召唤、旁观、捡战利品</div>
+    <div class="subtitle">
+      v0.2 — 移动 / 自动普攻 / 自动召唤 / 升级 perk · 生存 5 分钟
+    </div>
+
     <div id="wrap">
-      <canvas id="game" width="720" height="420"></canvas>
+      <canvas id="game" width="720" height="480"></canvas>
       <div id="panel">
-        <div class="stat"><span>魂魄 Souls</span><b id="souls">0</b></div>
-        <div class="stat"><span>波次 Wave</span><b id="wave">1 / 5</b></div>
-        <div class="stat"><span>军团 Army</span><b id="army">0</b></div>
+        <div class="stat"><span>⏱ 时间</span><b id="time">5:00</b></div>
+        <div class="stat"><span>❤ HP</span><b id="hp">100/100</b></div>
+        <div class="stat"><span>⚡ 等级</span><b id="lvl">1 (0/10)</b></div>
+        <div class="stat"><span>💀 魂魄</span><b id="souls">0</b></div>
+        <div class="stat"><span>🦴 军团</span><b id="army">0/3</b></div>
+        <div class="stat"><span>🗡 击杀</span><b id="kills">0</b></div>
         <hr />
-        <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px">
-          召唤（点击）
+        <div style="font-size: 11px; opacity: 0.7">操作</div>
+        <div>
+          <span class="key">WASD</span> / <span class="key">↑↓←→</span> 移动
         </div>
-        <button id="sum-warrior">
-          ⚔ 骷髅战士 <span class="cost">10</span>
-        </button>
-        <button id="sum-archer">
-          🏹 骷髅弓手 <span class="cost">15</span>
-        </button>
-        <button id="sum-mage">🔥 骷髅法师 <span class="cost">25</span></button>
+        <div>
+          自动普攻 · 自动召唤
+          <span style="float: right; color: #8a7a4a" id="cdsummon"
+            >下次召唤 …</span
+          >
+        </div>
+        <div>
+          <span class="key">Space</span> 暂停 · <span class="key">R</span> 重开
+        </div>
         <hr />
-        <div style="font-size: 11px; opacity: 0.7">阵型 / 优先级</div>
-        <button id="prio">优先：最近的敌人</button>
-        <div class="wave-banner" id="banner"></div>
+        <div style="font-size: 11px; opacity: 0.7">阵型</div>
+        <button
+          id="prio"
+          style="
+            width: 100%;
+            background: #2a2a36;
+            color: #d8d4c8;
+            border: 1px solid #4a4a5a;
+            padding: 5px;
+            font-family: inherit;
+            cursor: pointer;
+            font-size: 11px;
+            text-align: left;
+          "
+        >
+          优先：最近的敌人
+        </button>
+        <div class="banner" id="banner">准备好就动起来…</div>
         <div id="log"></div>
-        <div id="status">空格暂停 · R 重开</div>
       </div>
     </div>
+
+    <div id="levelup">
+      <div class="box">
+        <h2>⚡ 升级！选一个加成</h2>
+        <div id="perks" class="perks"></div>
+      </div>
+    </div>
+
     <script>
       (() => {
+        // ============================================================
+        // CONSTANTS
+        // ============================================================
         const cv = document.getElementById("game");
         const ctx = cv.getContext("2d");
-        const W = cv.width,
-          H = cv.height;
+        const VW = cv.width,
+          VH = cv.height;
+        const WORLD_W = VW,
+          WORLD_H = VH; // arena = one viewport, no scrolling
+        const GAME_DURATION = 300; // 5 min in seconds
+        const TILE_BG = 64;
 
-        const PRIORITIES = ["nearest", "weakest", "strongest"];
-        const PRIORITY_LABEL = {
-          nearest: "最近的敌人",
-          weakest: "最弱的敌人",
-          strongest: "最强的敌人",
+        // ============================================================
+        // ASSET LOADER (LPC bodies + FLARE dungeon)
+        // ============================================================
+        const ASSETS = "../public";
+        const SPR = {
+          skel: ASSETS + "/skeleton.png",
+          zomb: ASSETS + "/zombie.png",
+          male: ASSETS + "/male_walk.png",
+          dungeon: ASSETS + "/tileset_dungeon.png",
         };
+        const IMG = {};
+        let loaded = 0,
+          total = 0,
+          ready = false;
+        for (const [k, src] of Object.entries(SPR)) {
+          total++;
+          const img = new Image();
+          img.onload = img.onerror = () => {
+            loaded++;
+            if (loaded === total) ready = true;
+          };
+          img.src = src;
+          IMG[k] = img;
+        }
+        const TINTS = {};
+        function tintSheet(src, color) {
+          const c = document.createElement("canvas");
+          c.width = src.width;
+          c.height = src.height;
+          const x = c.getContext("2d");
+          x.drawImage(src, 0, 0);
+          x.globalCompositeOperation = "multiply";
+          x.fillStyle = color;
+          x.fillRect(0, 0, c.width, c.height);
+          x.globalCompositeOperation = "destination-in";
+          x.drawImage(src, 0, 0);
+          return c;
+        }
+        function ensureTints() {
+          if (TINTS.ready || !ready) return;
+          if (!IMG.skel.complete || !IMG.zomb.complete || !IMG.male.complete)
+            return;
+          TINTS.skelGreen = tintSheet(IMG.skel, "#90ff90");
+          TINTS.skelPurple = tintSheet(IMG.skel, "#c890ff");
+          TINTS.zombRed = tintSheet(IMG.zomb, "#ff6060");
+          TINTS.zombGreen = tintSheet(IMG.zomb, "#80c080");
+          TINTS.zombGray = tintSheet(IMG.zomb, "#a0a0a0");
+          TINTS.malePurple = tintSheet(IMG.male, "#a070ff");
+          TINTS.ready = true;
+        }
+        function lpcFrame(facing, t) {
+          const row =
+            facing === "left"
+              ? 1
+              : facing === "up"
+                ? 0
+                : facing === "down"
+                  ? 2
+                  : 3;
+          const col = 1 + (Math.floor(t / 100) % 8);
+          return { sx: col * 64, sy: row * 64 };
+        }
+        function drawSprite(sheet, facing, t, x, y, scale) {
+          if (!sheet || (!sheet.complete && sheet.tagName !== "CANVAS"))
+            return false;
+          const f = lpcFrame(facing, t);
+          const dw = 64 * scale,
+            dh = 64 * scale;
+          ctx.drawImage(
+            sheet,
+            f.sx,
+            f.sy,
+            64,
+            64,
+            x - dw / 2,
+            y - dh + 14,
+            dw,
+            dh,
+          );
+          return true;
+        }
 
-        // --- entities ---
+        // ============================================================
+        // NAMES + BACKSTORIES (v0.2 differentiator: each minion has identity)
+        // ============================================================
+        const FIRST_NAMES = [
+          "Garrick",
+          "Maeve",
+          "Thorvald",
+          "Lyra",
+          "Bran",
+          "Eira",
+          "Cedric",
+          "Mira",
+          "Owen",
+          "Selene",
+          "Hadrian",
+          "Vespera",
+          "Roric",
+          "Isolde",
+          "Karn",
+          "Yara",
+          "Gareth",
+          "Brienne",
+          "Aldric",
+          "Mordrek",
+        ];
+        const TITLES = [
+          "the Smith",
+          "the Healer",
+          "the Outcast",
+          "the Pale",
+          "the Forsaken",
+          "the Cursed",
+          "the Loyal",
+          "the Wanderer",
+          "the Mute",
+          "the Brave",
+          "the Fallen",
+          "the Last",
+          "the Twin",
+          "the Plagued",
+          "the Eternal",
+        ];
+        const BACKSTORIES = [
+          "曾在战场上失去双亲",
+          "死于学徒之手",
+          "因瘟疫失去家人",
+          "背叛了自己的国王",
+          "在暴风雪中失踪",
+          "为爱人挡下致命一击",
+          "被同袍出卖",
+          "守护了村庄至最后一刻",
+          "拒绝臣服于暴君",
+          "在地牢中度过余生",
+          "为孩子留下最后的面包",
+          "目睹自己的城堡焚毁",
+        ];
+        function makeName() {
+          const fn =
+            FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+          const tt = TITLES[Math.floor(Math.random() * TITLES.length)];
+          const bs =
+            BACKSTORIES[Math.floor(Math.random() * BACKSTORIES.length)];
+          return { full: `${fn} ${tt}`, story: bs };
+        }
+
+        // ============================================================
+        // STATE
+        // ============================================================
         const state = {
-          souls: 30,
-          wave: 1,
-          maxWave: 5,
           paused: false,
           over: false,
+          won: false,
+          time: GAME_DURATION,
+          tick: 0,
+          souls: 0,
+          kills: 0,
+          xp: 0,
+          level: 1,
+          xpNext: 10,
+          maxMinions: 3,
           priority: "nearest",
-          necro: { x: 60, y: H / 2, hp: 50, hpMax: 50, dead: false },
+          unlocked: { warrior: true, archer: false, mage: false },
+          perks: {
+            dmg: 1,
+            speed: 1,
+            atkSpeed: 1,
+            hpRegen: 0,
+            soulMagnet: 80,
+            projSpeed: 1,
+            summonCdMul: 1,
+          },
+          player: {
+            x: WORLD_W / 2,
+            y: WORLD_H / 2,
+            hp: 100,
+            hpMax: 100,
+            speed: 2.4,
+            atkRange: 220,
+            atkCd: 0,
+            atkCdMax: 30,
+            facing: "right",
+            moving: false,
+          },
+          autoSummonCd: 60,
+          autoSummonCdMax: 240, // 4s base interval
           minions: [],
           enemies: [],
           projectiles: [],
-          floats: [], // floating texts
-          nextEnemySpawn: 60,
-          enemiesToSpawn: 0,
-          wavePhase: "pre", // pre, fighting, won
-          waveTimer: 120,
+          pickups: [],
+          floats: [],
+          fx: [], // visual fx (nova rings, hits)
+          spawnCd: 60,
+          bossSpawned: false,
         };
+        const camera = { x: 0, y: 0 };
 
-        const TYPES = {
-          warrior: {
-            name: "骷髅战士",
-            cost: 10,
-            hp: 28,
-            dmg: 6,
-            range: 22,
+        // ============================================================
+        // ENEMY KINDS — scale up over time
+        // ============================================================
+        const ENEMY_KINDS = {
+          rat: {
+            name: "鼠",
+            hp: 14,
+            dmg: 5,
+            speed: 1.5,
+            range: 14,
+            atkCd: 60,
+            soul: 1,
+            scale: 0.55,
+            kindKey: "zomb",
+            facing: "left",
+            color: "#7a5a3a",
+          },
+          bandit: {
+            name: "强盗",
+            hp: 32,
+            dmg: 9,
+            speed: 1.0,
+            range: 18,
+            atkCd: 65,
+            soul: 2,
+            scale: 0.85,
+            kindKey: "male",
+            tint: "malePurple",
+            facing: "left",
+            color: "#a86848",
+          },
+          wolf: {
+            name: "狼",
+            hp: 24,
+            dmg: 12,
+            speed: 1.8,
+            range: 14,
             atkCd: 50,
-            speed: 0.9,
+            soul: 2,
+            scale: 0.75,
+            kindKey: "zomb",
+            tint: "zombGray",
+            facing: "left",
+            color: "#888",
+          },
+          ghoul: {
+            name: "食尸鬼",
+            hp: 55,
+            dmg: 14,
+            speed: 1.1,
+            range: 20,
+            atkCd: 70,
+            soul: 4,
+            scale: 1.0,
+            kindKey: "zomb",
+            tint: "zombGreen",
+            facing: "left",
+            color: "#80c080",
+          },
+          boss: {
+            name: "BOSS",
+            hp: 600,
+            dmg: 25,
+            speed: 0.7,
+            range: 30,
+            atkCd: 60,
+            soul: 60,
+            scale: 1.6,
+            kindKey: "zomb",
+            tint: "zombRed",
+            facing: "left",
+            color: "#c83030",
+          },
+        };
+        function pickEnemyKind(elapsed) {
+          // elapsed = seconds since start (0..300)
+          const r = Math.random();
+          if (elapsed < 30) return ENEMY_KINDS.rat;
+          if (elapsed < 90)
+            return r < 0.6 ? ENEMY_KINDS.rat : ENEMY_KINDS.bandit;
+          if (elapsed < 180)
+            return r < 0.4
+              ? ENEMY_KINDS.bandit
+              : r < 0.75
+                ? ENEMY_KINDS.wolf
+                : ENEMY_KINDS.rat;
+          if (elapsed < 270)
+            return r < 0.4
+              ? ENEMY_KINDS.wolf
+              : r < 0.7
+                ? ENEMY_KINDS.ghoul
+                : ENEMY_KINDS.bandit;
+          return r < 0.5 ? ENEMY_KINDS.ghoul : ENEMY_KINDS.wolf;
+        }
+
+        // ============================================================
+        // MINION KINDS
+        // ============================================================
+        const MINION_KINDS = {
+          warrior: {
+            hp: 40,
+            dmg: 8,
+            range: 24,
+            speed: 2.0,
+            atkCd: 40,
+            sheetKey: "skel",
+            tint: null,
             color: "#c8c0a8",
-            glyph: "⚔",
+            label: "骷髅战士",
+            attack: "melee",
           },
           archer: {
-            name: "骷髅弓手",
-            cost: 15,
-            hp: 18,
-            dmg: 5,
+            hp: 24,
+            dmg: 10,
             range: 180,
-            atkCd: 70,
-            speed: 0.7,
-            color: "#b8a878",
-            glyph: "🏹",
+            speed: 1.9,
+            atkCd: 55,
+            sheetKey: "skel",
+            tint: "skelGreen",
+            color: "#90ff90",
+            label: "骷髅射手",
+            attack: "ranged",
+            projColor: "#a8ff90",
+            projSpeed: 6,
           },
           mage: {
-            name: "骷髅法师",
-            cost: 25,
-            hp: 14,
-            dmg: 12,
-            range: 140,
-            atkCd: 110,
-            speed: 0.55,
-            color: "#9888c8",
-            glyph: "🔥",
+            hp: 20,
+            dmg: 18,
+            range: 160,
+            speed: 1.7,
+            atkCd: 80,
+            sheetKey: "skel",
+            tint: "skelPurple",
+            color: "#c890ff",
+            label: "骷髅法师",
+            attack: "ranged",
+            projColor: "#c890ff",
+            projSpeed: 4.5,
           },
         };
 
-        const ENEMY_KINDS = [
-          {
-            name: "Rat",
-            hp: 12,
-            dmg: 3,
-            speed: 0.9,
-            color: "#7a5a3a",
-            glyph: "🐀",
-            soul: 3,
-          },
-          {
-            name: "Bandit",
-            hp: 26,
-            dmg: 6,
-            speed: 0.7,
-            color: "#a86848",
-            glyph: "🗡",
-            soul: 7,
-          },
-          {
-            name: "Wolf",
-            hp: 22,
-            dmg: 8,
-            speed: 1.2,
-            color: "#888888",
-            glyph: "🐺",
-            soul: 6,
-          },
-          {
-            name: "Boss",
-            hp: 120,
-            dmg: 14,
-            speed: 0.5,
-            color: "#c83030",
-            glyph: "👹",
-            soul: 40,
-          },
-        ];
-
-        // --- helpers ---
+        // ============================================================
+        // HELPERS
+        // ============================================================
         const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
         const log = (msg, color) => {
           const el = document.getElementById("log");
           const d = document.createElement("div");
@@ -254,132 +562,450 @@
           if (color) d.style.color = color;
           el.appendChild(d);
           el.scrollTop = el.scrollHeight;
-          while (el.children.length > 60) el.removeChild(el.firstChild);
+          while (el.children.length > 80) el.removeChild(el.firstChild);
         };
-        const spawnFloat = (x, y, text, color) => {
-          state.floats.push({ x, y, text, color, life: 40 });
+        const float = (x, y, t, c) =>
+          state.floats.push({ x, y, text: t, color: c, life: 45 });
+        const banner = (msg, color) => {
+          const el = document.getElementById("banner");
+          el.textContent = msg;
+          if (color) el.style.color = color;
         };
 
-        // --- summoning ---
-        function summon(kind) {
-          const t = TYPES[kind];
-          if (!t || state.over) return;
-          if (state.souls < t.cost) {
-            log(`魂魄不足（需 ${t.cost}）`, "#a83030");
-            return;
+        // ============================================================
+        // INPUT
+        // ============================================================
+        const keys = {};
+        window.addEventListener("keydown", (e) => {
+          keys[e.code] = true;
+          if (e.code === "Space") {
+            state.paused = !state.paused;
+            e.preventDefault();
           }
-          state.souls -= t.cost;
-          const idx = state.minions.length;
+          if (e.code === "KeyR") location.reload();
+        });
+        window.addEventListener("keyup", (e) => {
+          keys[e.code] = false;
+        });
+
+        document.getElementById("prio").onclick = () => {
+          const ord = ["nearest", "weakest", "strongest"];
+          const lbl = {
+            nearest: "最近的敌人",
+            weakest: "最弱的敌人",
+            strongest: "最强的敌人",
+          };
+          const i = ord.indexOf(state.priority);
+          state.priority = ord[(i + 1) % ord.length];
+          document.getElementById("prio").textContent =
+            "优先：" + lbl[state.priority];
+        };
+
+        // ============================================================
+        // AUTO-SUMMON
+        // ============================================================
+        function pickSummonKind() {
+          const pool = [];
+          if (state.unlocked.warrior) pool.push("warrior");
+          if (state.unlocked.archer) pool.push("archer");
+          if (state.unlocked.mage) pool.push("mage");
+          return pool[Math.floor(Math.random() * pool.length)] || "warrior";
+        }
+        function autoSummonOne() {
+          if (state.minions.length >= state.maxMinions) return false;
+          const kind = pickSummonKind();
+          const t = MINION_KINDS[kind];
+          const id = makeName();
           state.minions.push({
             kind,
             ...t,
-            x: state.necro.x + 20 + (idx % 3) * 14,
-            y: state.necro.y - 30 + Math.floor(idx / 3) * 30,
             hp: t.hp,
             hpMax: t.hp,
+            x: state.player.x + (Math.random() - 0.5) * 40,
+            y: state.player.y + (Math.random() - 0.5) * 40,
             cd: 0,
             target: null,
+            facing: "right",
+            moving: false,
+            name: id.full,
+            story: id.story,
+            kills: 0,
           });
-          log(`🦴 召唤 ${t.name}`, "#b89860");
-          updatePanel();
+          log(`🦴 ${t.label} ${id.full} —— ${id.story}`, "#b89860");
+          return true;
         }
 
-        // --- waves ---
-        function startWave() {
-          const sizes = [4, 6, 8, 10, 1]; // wave 5 is boss
-          const isBoss = state.wave === state.maxWave;
-          state.enemiesToSpawn = sizes[state.wave - 1];
-          state.nextEnemySpawn = 30;
-          state.wavePhase = "fighting";
-          document.getElementById("banner").textContent = isBoss
-            ? "⚠ BOSS WAVE ⚠"
-            : `第 ${state.wave} 波`;
-          log(
-            isBoss ? "⚠ BOSS 出现！" : `--- 第 ${state.wave} 波 ---`,
-            isBoss ? "#c83030" : "#8888c8",
+        // ============================================================
+        // PERKS / LEVELUP
+        // ============================================================
+        const PERK_POOL = [
+          {
+            id: "dmg",
+            name: "骨刃锐化",
+            desc: "全军 + 法师伤害 +20%",
+            apply: (s) => {
+              s.perks.dmg *= 1.2;
+            },
+          },
+          {
+            id: "speed",
+            name: "亡者疾行",
+            desc: "移动速度 +15%",
+            apply: (s) => {
+              s.perks.speed *= 1.15;
+              s.player.speed *= 1.15;
+            },
+          },
+          {
+            id: "atks",
+            name: "狂怒攻势",
+            desc: "普攻速度 +25%",
+            apply: (s) => {
+              s.perks.atkSpeed *= 1.25;
+              s.player.atkCdMax = Math.max(8, s.player.atkCdMax / 1.25);
+            },
+          },
+          {
+            id: "army",
+            name: "军团扩编",
+            desc: "召唤上限 +1",
+            apply: (s) => {
+              s.maxMinions += 1;
+            },
+          },
+          {
+            id: "hp",
+            name: "血肉重塑",
+            desc: "最大 HP +30 并满血",
+            apply: (s) => {
+              s.player.hpMax += 30;
+              s.player.hp = s.player.hpMax;
+            },
+          },
+          {
+            id: "regen",
+            name: "灵魂滋养",
+            desc: "每秒回血 +1",
+            apply: (s) => {
+              s.perks.hpRegen += 1;
+            },
+          },
+          {
+            id: "magnet",
+            name: "灵魂磁吸",
+            desc: "魂魄拾取范围 +60",
+            apply: (s) => {
+              s.perks.soulMagnet += 60;
+            },
+          },
+          {
+            id: "projsp",
+            name: "骨刺加速",
+            desc: "普攻投射物速度 +40%",
+            apply: (s) => {
+              s.perks.projSpeed *= 1.4;
+            },
+          },
+          {
+            id: "summRate",
+            name: "亡灵契约",
+            desc: "自动召唤间隔 −25%",
+            apply: (s) => {
+              s.perks.summonCdMul *= 0.75;
+            },
+          },
+          {
+            id: "unlockArcher",
+            name: "解锁：骷髅射手",
+            desc: "召唤池加入射手（远程）",
+            once: true,
+            available: (s) => !s.unlocked.archer,
+            apply: (s) => {
+              s.unlocked.archer = true;
+            },
+          },
+          {
+            id: "unlockMage",
+            name: "解锁：骷髅法师",
+            desc: "召唤池加入法师（高伤远程）",
+            once: true,
+            available: (s) => !s.unlocked.mage,
+            apply: (s) => {
+              s.unlocked.mage = true;
+            },
+          },
+        ];
+        function showLevelUp() {
+          state.paused = true;
+          const pool = PERK_POOL.filter(
+            (p) => !p.available || p.available(state),
           );
+          const choices = [];
+          for (let i = 0; i < 3 && pool.length; i++) {
+            const idx = Math.floor(Math.random() * pool.length);
+            choices.push(pool.splice(idx, 1)[0]);
+          }
+          const wrap = document.getElementById("levelup");
+          const slot = document.getElementById("perks");
+          slot.innerHTML = "";
+          for (const p of choices) {
+            const div = document.createElement("div");
+            div.className = "perk";
+            div.innerHTML = `<b>${p.name}</b><div class="desc">${p.desc}</div>`;
+            div.onclick = () => {
+              p.apply(state);
+              log(`⚡ 选择 perk: ${p.name}`, "#b89860");
+              wrap.classList.remove("show");
+              state.paused = false;
+            };
+            slot.appendChild(div);
+          }
+          wrap.classList.add("show");
+        }
+        function gainXp(n) {
+          state.xp += n;
+          while (state.xp >= state.xpNext) {
+            state.xp -= state.xpNext;
+            state.level++;
+            state.xpNext = Math.floor(10 + state.level * state.level * 1.5);
+            log(`⭐ 升至 ${state.level} 级！`, "#ffe080");
+            showLevelUp();
+          }
         }
 
+        // ============================================================
+        // SPAWNING
+        // ============================================================
         function spawnEnemy() {
-          const isBossWave = state.wave === state.maxWave;
-          const kindIdx = isBossWave
-            ? 3
-            : Math.min(2, Math.floor(Math.random() * (state.wave + 1)));
-          const k = ENEMY_KINDS[kindIdx];
-          const scale = 1 + (state.wave - 1) * 0.15;
+          const elapsed = GAME_DURATION - state.time;
+          const k = pickEnemyKind(elapsed);
+          // spawn at one of the four arena edges
+          const side = Math.floor(Math.random() * 4);
+          let x, y;
+          if (side === 0) {
+            x = 20;
+            y = 20 + Math.random() * (WORLD_H - 40);
+          } else if (side === 1) {
+            x = WORLD_W - 20;
+            y = 20 + Math.random() * (WORLD_H - 40);
+          } else if (side === 2) {
+            x = 20 + Math.random() * (WORLD_W - 40);
+            y = 20;
+          } else {
+            x = 20 + Math.random() * (WORLD_W - 40);
+            y = WORLD_H - 20;
+          }
+          const scale = 1 + elapsed / 180; // up to ~2.7x at 5min
           state.enemies.push({
             ...k,
             hp: Math.floor(k.hp * scale),
             hpMax: Math.floor(k.hp * scale),
-            dmg: Math.floor(k.dmg * scale),
-            x: W - 20,
-            y: 60 + Math.random() * (H - 120),
+            dmg: Math.floor(k.dmg * (0.7 + elapsed / 240)),
+            x,
+            y,
             cd: 0,
             target: null,
           });
-          state.enemiesToSpawn--;
+        }
+        function spawnBoss() {
+          const k = ENEMY_KINDS.boss;
+          state.enemies.push({
+            ...k,
+            hp: k.hp,
+            hpMax: k.hp,
+            x: clamp(state.player.x + 200, 40, WORLD_W - 40),
+            y: clamp(state.player.y + 100, 40, WORLD_H - 40),
+            cd: 0,
+            target: null,
+          });
+          state.bossSpawned = true;
+          banner("⚠ BOSS 出现 ⚠", "#c83030");
+          log("⚠ BOSS 出现 —— 击败它即胜利", "#c83030");
         }
 
-        // --- AI: pick a target by priority ---
-        function pickTarget(unit, pool) {
+        // ============================================================
+        // AI / TICK
+        // ============================================================
+        function pickTargetFor(unit, pool, mode) {
           if (!pool.length) return null;
-          let best = pool[0],
+          let best = null,
             bestKey = Infinity;
           for (const e of pool) {
-            let key;
-            if (state.priority === "nearest") key = dist(unit, e);
-            else if (state.priority === "weakest") key = e.hp;
-            else key = -e.hp; // strongest
-            // for enemies targeting minions, default to nearest
-            if (pool === state.minions) key = dist(unit, e);
-            if (key < bestKey) {
-              bestKey = key;
+            if (e.hp <= 0) continue;
+            let k;
+            if (mode === "weakest") k = e.hp;
+            else if (mode === "strongest") k = -e.hp;
+            else k = dist(unit, e);
+            if (k < bestKey) {
+              bestKey = k;
               best = e;
             }
           }
           return best;
         }
+        function moveToward(u, tx, ty, sp) {
+          const dx = tx - u.x,
+            dy = ty - u.y;
+          const d = Math.hypot(dx, dy) || 1;
+          u.x += (dx / d) * sp;
+          u.y += (dy / d) * sp;
+          if (Math.abs(dx) > Math.abs(dy)) u.facing = dx > 0 ? "right" : "left";
+          else u.facing = dy > 0 ? "down" : "up";
+        }
+        function updatePlayer() {
+          const p = state.player;
+          let dx = 0,
+            dy = 0;
+          if (keys.KeyW || keys.ArrowUp) dy -= 1;
+          if (keys.KeyS || keys.ArrowDown) dy += 1;
+          if (keys.KeyA || keys.ArrowLeft) dx -= 1;
+          if (keys.KeyD || keys.ArrowRight) dx += 1;
+          const m = Math.hypot(dx, dy);
+          p.moving = m > 0;
+          if (m > 0) {
+            p.x += (dx / m) * p.speed;
+            p.y += (dy / m) * p.speed;
+            p.x = clamp(p.x, 16, WORLD_W - 16);
+            p.y = clamp(p.y, 16, WORLD_H - 16);
+            if (Math.abs(dx) >= Math.abs(dy))
+              p.facing = dx > 0 ? "right" : "left";
+            else p.facing = dy > 0 ? "down" : "up";
+          }
 
-        // --- combat tick ---
-        function tickUnit(u, allies, foes, isMinion) {
-          if (u.hp <= 0) return;
-          if (!u.target || u.target.hp <= 0) u.target = pickTarget(u, foes);
-          if (!u.target) return;
+          // auto-attack: throw bone projectile at nearest in range
+          if (p.atkCd > 0) p.atkCd--;
 
-          const d = dist(u, u.target);
-          if (d > u.range) {
-            // move toward
-            const dx = u.target.x - u.x,
-              dy = u.target.y - u.y;
-            const m = Math.hypot(dx, dy) || 1;
-            u.x += (dx / m) * u.speed;
-            u.y += (dy / m) * u.speed;
-          } else {
-            // attack
-            if (u.cd <= 0) {
-              u.cd = u.atkCd || 60;
-              if (u.range > 40) {
-                // ranged: spawn projectile
-                state.projectiles.push({
-                  x: u.x,
-                  y: u.y,
-                  tx: u.target,
-                  dmg: u.dmg,
-                  color: u.kind === "mage" ? "#ff6040" : "#ffd060",
-                  speed: 4,
-                  friendly: isMinion,
-                });
-              } else {
-                // melee: instant
-                u.target.hp -= u.dmg;
-                spawnFloat(u.target.x, u.target.y, "-" + u.dmg, "#ff8080");
-              }
+          if (p.atkCd <= 0) {
+            const tgt = pickTargetFor(p, state.enemies, state.priority);
+            if (tgt && dist(p, tgt) <= p.atkRange) {
+              p.atkCd = p.atkCdMax;
+              state.projectiles.push({
+                x: p.x,
+                y: p.y,
+                tx: tgt,
+                dmg: 8 * state.perks.dmg,
+                color: "#a0e0ff",
+                speed: 5 * state.perks.projSpeed,
+                friendly: true,
+                from: "player",
+              });
             }
           }
-          if (u.cd > 0) u.cd--;
-        }
 
-        function tickProjectile(p) {
+          // hp regen
+          if (state.perks.hpRegen > 0 && state.tick % 60 === 0) {
+            p.hp = Math.min(p.hpMax, p.hp + state.perks.hpRegen);
+          }
+        }
+        function updateMinion(m) {
+          if (m.hp <= 0) return;
+          // re-target if current is dead OR drifted too far from player
+          const LEASH = 180; // minions only engage within this distance from player
+          if (
+            !m.target ||
+            m.target.hp <= 0 ||
+            dist(m.target, state.player) > LEASH
+          ) {
+            // pick from enemies near the player
+            let best = null,
+              bestKey = Infinity;
+            for (const e of state.enemies) {
+              if (e.hp <= 0) continue;
+              if (dist(e, state.player) > LEASH) continue;
+              const k =
+                state.priority === "weakest"
+                  ? e.hp
+                  : state.priority === "strongest"
+                    ? -e.hp
+                    : dist(m, e);
+              if (k < bestKey) {
+                bestKey = k;
+                best = e;
+              }
+            }
+            m.target = best;
+          }
+          const distFromPlayer = dist(m, state.player);
+          let goalX,
+            goalY,
+            sp = m.speed;
+          if (m.target) {
+            const dToTgt = dist(m, m.target);
+            if (dToTgt > m.range) {
+              goalX = m.target.x;
+              goalY = m.target.y;
+            } else {
+              // attack
+              if (m.cd <= 0) {
+                m.cd = m.atkCd;
+                const dmg = m.dmg * state.perks.dmg;
+                if (m.attack === "ranged") {
+                  state.projectiles.push({
+                    x: m.x,
+                    y: m.y,
+                    tx: m.target,
+                    dmg,
+                    color: m.projColor || "#a8ff90",
+                    speed: (m.projSpeed || 5) * state.perks.projSpeed,
+                    friendly: true,
+                    from: "minion",
+                  });
+                } else {
+                  m.target.hp -= dmg;
+                  float(
+                    m.target.x,
+                    m.target.y,
+                    "-" + Math.floor(dmg),
+                    "#ff8080",
+                  );
+                }
+              }
+              m.moving = false;
+              if (m.cd > 0) m.cd--;
+              return;
+            }
+          } else {
+            // no target nearby: orbit the player at a comfortable radius
+            const orbitR = 56;
+            if (m.orbitAng === undefined)
+              m.orbitAng = Math.random() * Math.PI * 2;
+            m.orbitAng += 0.015;
+            goalX = state.player.x + Math.cos(m.orbitAng) * orbitR;
+            goalY = state.player.y + Math.sin(m.orbitAng) * orbitR;
+          }
+          if (distFromPlayer > 140) sp *= 1.6; // catch up if separated
+          moveToward(m, goalX, goalY, sp);
+          m.moving = true;
+          if (m.cd > 0) m.cd--;
+        }
+        function updateEnemy(e) {
+          if (e.hp <= 0) return;
+          // pick target: closest of player + minions
+          let tgt = state.player;
+          let bestD = dist(e, state.player);
+          for (const m of state.minions) {
+            if (m.hp <= 0) continue;
+            const d = dist(e, m);
+            if (d < bestD) {
+              bestD = d;
+              tgt = m;
+            }
+          }
+          e.target = tgt;
+          if (bestD > e.range) {
+            moveToward(e, tgt.x, tgt.y, e.speed);
+            e.moving = true;
+          } else {
+            e.moving = false;
+            if (e.cd <= 0) {
+              e.cd = e.atkCd;
+              tgt.hp -= e.dmg;
+              float(tgt.x, tgt.y, "-" + e.dmg, "#ffaa44");
+            }
+          }
+          if (e.cd > 0) e.cd--;
+        }
+        function updateProjectile(p) {
           if (!p.tx || p.tx.hp <= 0) {
             p.dead = true;
             return;
@@ -389,10 +1015,10 @@
           const d = Math.hypot(dx, dy) || 1;
           if (d < 6) {
             p.tx.hp -= p.dmg;
-            spawnFloat(
+            float(
               p.tx.x,
               p.tx.y,
-              "-" + p.dmg,
+              "-" + Math.floor(p.dmg),
               p.friendly ? "#ff8080" : "#ffaa44",
             );
             p.dead = true;
@@ -402,236 +1028,425 @@
           p.y += (dy / d) * p.speed;
         }
 
-        // --- main loop ---
+        // ============================================================
+        // MAIN LOOP
+        // ============================================================
         function update() {
           if (state.paused || state.over) return;
+          state.tick++;
 
-          // wave logic
-          if (state.wavePhase === "pre") {
-            state.waveTimer--;
-            if (state.waveTimer <= 0) startWave();
-          } else if (state.wavePhase === "fighting") {
-            if (state.enemiesToSpawn > 0) {
-              state.nextEnemySpawn--;
-              if (state.nextEnemySpawn <= 0) {
-                spawnEnemy();
-                state.nextEnemySpawn = 30 + Math.random() * 40;
-              }
-            } else if (state.enemies.length === 0) {
-              // wave clear
-              const reward = 25 + state.wave * 10;
-              state.souls += reward;
-              log(`🏆 第 ${state.wave} 波清场！+${reward} 魂魄`, "#80c850");
-              if (state.wave >= state.maxWave) {
-                state.wavePhase = "won";
-                state.over = true;
-                document.getElementById("banner").textContent = "🏆 胜 利！";
-                log("🏆 全部 5 波清场！按 R 重开", "#b89860");
+          // game timer
+          if (state.tick % 60 === 0) state.time = Math.max(0, state.time - 1);
+          if (state.time <= 0 && !state.bossSpawned) spawnBoss();
+
+          updatePlayer();
+
+          // auto-summon
+          if (state.minions.length < state.maxMinions) {
+            state.autoSummonCd--;
+            if (state.autoSummonCd <= 0) {
+              if (autoSummonOne()) {
+                state.autoSummonCd =
+                  state.autoSummonCdMax * state.perks.summonCdMul;
               } else {
-                state.wave++;
-                state.wavePhase = "pre";
-                state.waveTimer = 180;
-                document.getElementById("banner").textContent =
-                  `准备第 ${state.wave} 波…`;
+                state.autoSummonCd = 30;
               }
             }
+          } else {
+            // keep timer ready when full
+            state.autoSummonCd = Math.min(
+              state.autoSummonCd,
+              state.autoSummonCdMax * state.perks.summonCdMul,
+            );
           }
 
-          // tick units
-          for (const m of state.minions)
-            tickUnit(m, state.minions, state.enemies, true);
-          for (const e of state.enemies) {
-            // enemies prioritize necro if close, else minion
-            const allTargets = state.minions.filter((x) => x.hp > 0);
-            if (state.necro.hp > 0) allTargets.push(state.necro);
-            tickUnit(e, state.enemies, allTargets, false);
-          }
-          for (const p of state.projectiles) tickProjectile(p);
-
-          // necro attack
-          if (state.necro.hp > 0 && !state.necro.dead) {
-            state.necro.cd = (state.necro.cd || 0) - 1;
-            const closest = pickTarget(state.necro, state.enemies);
-            if (
-              closest &&
-              dist(state.necro, closest) < 200 &&
-              state.necro.cd <= 0
-            ) {
-              state.necro.cd = 90;
-              state.projectiles.push({
-                x: state.necro.x,
-                y: state.necro.y,
-                tx: closest,
-                dmg: 4,
-                color: "#80ff80",
-                speed: 3,
-                friendly: true,
-              });
+          // enemy spawning (rate scales with elapsed)
+          if (!state.bossSpawned) {
+            state.spawnCd--;
+            if (state.spawnCd <= 0) {
+              const elapsed = GAME_DURATION - state.time;
+              const rate = Math.max(8, 60 - elapsed * 0.18); // faster over time
+              state.spawnCd = rate;
+              const batch = 1 + Math.floor(elapsed / 60); // bigger packs over time
+              for (let i = 0; i < batch; i++) spawnEnemy();
             }
           }
 
-          // collect dead, grant souls
+          for (const m of state.minions) updateMinion(m);
+          for (const e of state.enemies) updateEnemy(e);
+          for (const p of state.projectiles) updateProjectile(p);
+
+          // collect dead
           state.enemies = state.enemies.filter((e) => {
             if (e.hp <= 0) {
-              state.souls += e.soul;
-              spawnFloat(e.x, e.y, "+" + e.soul + "魂", "#80c850");
-              log(`💀 击杀 ${e.name}（+${e.soul} 魂）`, "#80c850");
+              state.kills++;
+              gainXp(e.soul);
+              // drop soul pickup
+              state.pickups.push({
+                x: e.x,
+                y: e.y,
+                kind: "soul",
+                value: e.soul,
+              });
+              float(e.x, e.y - 10, "+" + e.soul + "xp", "#ffe080");
+              if (e.name === "BOSS") {
+                state.won = true;
+                state.over = true;
+                banner("🏆 击败 BOSS！胜 利 🏆", "#80c850");
+                log("🏆 击败 BOSS — 胜利！按 R 重开", "#80c850");
+              }
               return false;
             }
             return true;
           });
           state.minions = state.minions.filter((m) => {
             if (m.hp <= 0) {
-              log(`☠ ${m.name} 倒下了`, "#a86060");
-              spawnFloat(m.x, m.y, "☠", "#a86060");
+              log(
+                `☠ ${m.name} 永久死亡 — ${m.story}（生前击杀 ${m.kills}）`,
+                "#a86060",
+              );
+              float(m.x, m.y, "☠ " + m.name, "#a86060");
               return false;
             }
             return true;
           });
           state.projectiles = state.projectiles.filter((p) => !p.dead);
+          state.fx = state.fx.filter((f) => {
+            f.life--;
+            if (f.kind === "nova") f.r = f.rMax * (1 - f.life / 30);
+            return f.life > 0;
+          });
           state.floats = state.floats.filter((f) => {
             f.life--;
-            f.y -= 0.5;
+            f.y -= 0.6;
             return f.life > 0;
           });
 
-          // necro death = lose
-          if (state.necro.hp <= 0 && !state.over) {
-            state.over = true;
-            state.necro.dead = true;
-            document.getElementById("banner").textContent = "💀 你陨落了";
-            log("💀 死灵法师倒下，按 R 重开", "#c83030");
+          // pickups: magnet then collect
+          for (const pk of state.pickups) {
+            const d = dist(pk, state.player);
+            if (d < state.perks.soulMagnet) {
+              const dx = state.player.x - pk.x,
+                dy = state.player.y - pk.y;
+              const m = Math.hypot(dx, dy) || 1;
+              const sp = Math.max(2, 6 - d / 30);
+              pk.x += (dx / m) * sp;
+              pk.y += (dy / m) * sp;
+            }
+            if (d < 18) {
+              pk.dead = true;
+              state.souls += pk.value;
+            }
           }
+          state.pickups = state.pickups.filter((p) => !p.dead);
+
+          // player death
+          if (state.player.hp <= 0 && !state.over) {
+            state.over = true;
+            banner("💀 你 陨 落 了", "#c83030");
+            log("💀 死灵法师陨落，按 R 重开", "#c83030");
+          }
+
+          // camera follow
+          camera.x = clamp(state.player.x - VW / 2, 0, WORLD_W - VW);
+          camera.y = clamp(state.player.y - VH / 2, 0, WORLD_H - VH);
 
           updatePanel();
         }
 
         function updatePanel() {
+          const m = Math.floor(state.time / 60),
+            s = state.time % 60;
+          document.getElementById("time").textContent =
+            `${m}:${s.toString().padStart(2, "0")}`;
+          document.getElementById("hp").textContent =
+            `${Math.max(0, Math.ceil(state.player.hp))}/${state.player.hpMax}`;
+          document.getElementById("lvl").textContent =
+            `${state.level} (${state.xp}/${state.xpNext})`;
           document.getElementById("souls").textContent = state.souls;
-          document.getElementById("wave").textContent =
-            `${state.wave} / ${state.maxWave}`;
-          document.getElementById("army").textContent = state.minions.length;
-          for (const k of ["warrior", "archer", "mage"]) {
-            const btn = document.getElementById("sum-" + k);
-            btn.disabled = state.over || state.souls < TYPES[k].cost;
+          document.getElementById("army").textContent =
+            `${state.minions.length}/${state.maxMinions}`;
+          document.getElementById("kills").textContent = state.kills;
+          const cdEl = document.getElementById("cdsummon");
+          if (cdEl) {
+            if (state.minions.length >= state.maxMinions) {
+              cdEl.textContent = "军团已满";
+            } else {
+              cdEl.textContent =
+                "下次召唤 " + (state.autoSummonCd / 60).toFixed(1) + "s";
+            }
           }
         }
 
-        // --- rendering ---
-        function drawHpBar(x, y, w, frac, color) {
+        // ============================================================
+        // RENDER
+        // ============================================================
+        function drawBg() {
+          ensureTints();
+          if (ready && IMG.dungeon.complete && IMG.dungeon.naturalWidth > 0) {
+            // tile slice from dungeon at offset
+            const slice = 256;
+            const sx = ((camera.x % slice) + slice) % slice;
+            const sy = ((camera.y % slice) + slice) % slice;
+            for (let y = -sy; y < VH; y += slice) {
+              for (let x = -sx; x < VW; x += slice) {
+                ctx.drawImage(
+                  IMG.dungeon,
+                  0,
+                  600,
+                  slice,
+                  slice,
+                  x,
+                  y,
+                  slice,
+                  slice,
+                );
+              }
+            }
+            ctx.fillStyle = "rgba(13,13,18,0.5)";
+            ctx.fillRect(0, 0, VW, VH);
+          } else {
+            ctx.fillStyle = "#0a0a0e";
+            ctx.fillRect(0, 0, VW, VH);
+          }
+          // grid hint
+          ctx.strokeStyle = "rgba(80,60,40,0.18)";
+          for (let x = -(camera.x % TILE_BG); x < VW; x += TILE_BG) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, VH);
+            ctx.stroke();
+          }
+          for (let y = -(camera.y % TILE_BG); y < VH; y += TILE_BG) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(VW, y);
+            ctx.stroke();
+          }
+        }
+        function hpBar(x, y, w, frac, color) {
           ctx.fillStyle = "#000";
           ctx.fillRect(x - w / 2, y, w, 3);
           ctx.fillStyle = color || "#80c850";
           ctx.fillRect(x - w / 2, y, w * Math.max(0, frac), 3);
         }
-
+        function worldX(x) {
+          return x - camera.x;
+        }
+        function worldY(y) {
+          return y - camera.y;
+        }
+        function inView(o, pad = 80) {
+          return (
+            o.x > camera.x - pad &&
+            o.x < camera.x + VW + pad &&
+            o.y > camera.y - pad &&
+            o.y < camera.y + VH + pad
+          );
+        }
         function render() {
-          // bg
-          ctx.fillStyle = "#1a1a22";
-          ctx.fillRect(0, 0, W, H);
-          // ground line texture
-          ctx.strokeStyle = "#2a2a32";
-          for (let i = 0; i < 6; i++) {
-            ctx.beginPath();
-            ctx.moveTo(0, 60 + i * 60);
-            ctx.lineTo(W, 60 + i * 60);
-            ctx.stroke();
-          }
-          // necro spawn zone
-          ctx.fillStyle = "rgba(180,80,200,0.06)";
-          ctx.fillRect(0, 0, 120, H);
+          drawBg();
+          ctx.textAlign = "center";
+          const t = performance.now();
 
-          // necro
-          if (!state.necro.dead) {
-            ctx.font = "28px serif";
-            ctx.textAlign = "center";
-            ctx.fillText("🧙", state.necro.x, state.necro.y + 8);
-            drawHpBar(
-              state.necro.x,
-              state.necro.y - 20,
-              30,
-              state.necro.hp / state.necro.hpMax,
-              "#c060c0",
-            );
+          // pickups (souls)
+          for (const pk of state.pickups) {
+            if (!inView(pk)) continue;
+            const x = worldX(pk.x),
+              y = worldY(pk.y);
+            ctx.fillStyle = "#80c850";
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "rgba(128,200,80,0.3)";
+            ctx.beginPath();
+            ctx.arc(x, y, 7 + Math.sin(t / 100) * 2, 0, Math.PI * 2);
+            ctx.fill();
           }
 
           // minions
-          ctx.font = "20px serif";
           for (const m of state.minions) {
-            ctx.fillText(m.glyph, m.x, m.y + 6);
-            drawHpBar(m.x, m.y - 14, 24, m.hp / m.hpMax, "#80c850");
+            if (!inView(m)) continue;
+            const x = worldX(m.x),
+              y = worldY(m.y);
+            const sheet =
+              m.tint && TINTS[m.tint]
+                ? TINTS[m.tint]
+                : IMG[m.sheetKey || "skel"];
+            const drawn = drawSprite(
+              sheet,
+              m.facing,
+              m.moving ? t : 0,
+              x,
+              y,
+              0.7,
+            );
+            if (!drawn) {
+              ctx.font = "20px serif";
+              ctx.fillStyle = m.color || "#c8c0a8";
+              ctx.fillText(
+                m.kind === "archer" ? "🏹" : m.kind === "mage" ? "🔥" : "⚔",
+                x,
+                y + 6,
+              );
+            }
+            hpBar(x, y - 22, 24, m.hp / m.hpMax, "#80c850");
+            // name above
+            ctx.font = "9px monospace";
+            ctx.fillStyle = "rgba(216,212,200,0.7)";
+            ctx.fillText(m.name.split(" ")[0], x, y - 26);
           }
 
           // enemies
           for (const e of state.enemies) {
-            ctx.fillText(e.glyph, e.x, e.y + 6);
-            drawHpBar(
-              e.x,
-              e.y - 14,
-              e.name === "Boss" ? 60 : 24,
+            if (!inView(e)) continue;
+            const x = worldX(e.x),
+              y = worldY(e.y);
+            const sheet =
+              e.tint && TINTS[e.tint] ? TINTS[e.tint] : IMG[e.kindKey];
+            const drawn = drawSprite(
+              sheet,
+              e.facing,
+              e.moving ? t : 0,
+              x,
+              y,
+              e.scale,
+            );
+            if (!drawn) {
+              ctx.font = (e.scale > 1.2 ? "26px" : "18px") + " serif";
+              ctx.fillStyle = e.color;
+              ctx.fillText("👹", x, y + 6);
+            }
+            hpBar(
+              x,
+              y - 22,
+              e.scale > 1.2 ? 60 : 24,
               e.hp / e.hpMax,
               "#c84040",
             );
           }
 
+          // player (necromancer)
+          {
+            const x = worldX(state.player.x),
+              y = worldY(state.player.y);
+            const sheet = TINTS.malePurple || IMG.male;
+            const drawn = drawSprite(
+              sheet,
+              state.player.facing,
+              state.player.moving ? t : 0,
+              x,
+              y,
+              0.95,
+            );
+            if (!drawn) {
+              ctx.font = "28px serif";
+              ctx.fillStyle = "#c060c0";
+              ctx.fillText("🧙", x, y + 8);
+            }
+            // aura
+            ctx.strokeStyle = "rgba(192,96,192,0.35)";
+            ctx.beginPath();
+            ctx.arc(x, y + 4, 26, 0, Math.PI * 2);
+            ctx.stroke();
+            hpBar(
+              x,
+              y - 30,
+              36,
+              state.player.hp / state.player.hpMax,
+              "#c060c0",
+            );
+          }
+
           // projectiles
           for (const p of state.projectiles) {
+            if (!inView(p)) continue;
+            const x = worldX(p.x),
+              y = worldY(p.y);
             ctx.fillStyle = p.color;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "rgba(160,224,255,0.25)";
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
             ctx.fill();
           }
 
-          // floating texts
+          // fx (nova rings)
+          for (const f of state.fx) {
+            if (f.kind === "nova") {
+              const x = worldX(f.x),
+                y = worldY(f.y);
+              ctx.strokeStyle = `rgba(192,128,255,${f.life / 30})`;
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.arc(x, y, f.r, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.lineWidth = 1;
+            }
+          }
+
+          // floats
           ctx.font = "11px monospace";
           for (const f of state.floats) {
+            if (!inView(f)) continue;
             ctx.fillStyle = f.color;
             ctx.globalAlpha = Math.min(1, f.life / 30);
-            ctx.fillText(f.text, f.x, f.y);
+            ctx.fillText(f.text, worldX(f.x), worldY(f.y));
           }
           ctx.globalAlpha = 1;
 
-          // pause overlay
-          if (state.paused) {
-            ctx.fillStyle = "rgba(0,0,0,0.5)";
-            ctx.fillRect(0, 0, W, H);
+          // HUD: minimap of enemies as red dots near edge
+          ctx.fillStyle = "rgba(200,64,64,0.7)";
+          for (const e of state.enemies) {
+            if (inView(e, -20)) continue;
+            // draw a dot at the screen edge pointing to it
+            const dx = e.x - state.player.x,
+              dy = e.y - state.player.y;
+            const ang = Math.atan2(dy, dx);
+            const r = Math.min(VW, VH) / 2 - 10;
+            const cx = VW / 2 + Math.cos(ang) * r;
+            const cy = VH / 2 + Math.sin(ang) * r;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // loading
+          if (!ready) {
+            ctx.fillStyle = "rgba(0,0,0,0.7)";
+            ctx.fillRect(0, VH - 22, VW, 22);
             ctx.fillStyle = "#b89860";
-            ctx.font = "24px monospace";
-            ctx.textAlign = "center";
-            ctx.fillText("— PAUSED —", W / 2, H / 2);
+            ctx.font = "12px monospace";
+            ctx.fillText(`加载美术 ${loaded}/${total}…`, VW / 2, VH - 7);
+          }
+          // pause
+          if (
+            state.paused &&
+            !document.getElementById("levelup").classList.contains("show")
+          ) {
+            ctx.fillStyle = "rgba(0,0,0,0.55)";
+            ctx.fillRect(0, 0, VW, VH);
+            ctx.fillStyle = "#b89860";
+            ctx.font = "26px monospace";
+            ctx.fillText("— PAUSED —", VW / 2, VH / 2);
           }
         }
 
+        // ============================================================
+        // BOOT
+        // ============================================================
         function loop() {
           update();
           render();
           requestAnimationFrame(loop);
         }
-
-        // --- input ---
-        document.getElementById("sum-warrior").onclick = () =>
-          summon("warrior");
-        document.getElementById("sum-archer").onclick = () => summon("archer");
-        document.getElementById("sum-mage").onclick = () => summon("mage");
-        document.getElementById("prio").onclick = () => {
-          const i = PRIORITIES.indexOf(state.priority);
-          state.priority = PRIORITIES[(i + 1) % PRIORITIES.length];
-          document.getElementById("prio").textContent =
-            "优先：" + PRIORITY_LABEL[state.priority];
-        };
-
-        window.addEventListener("keydown", (e) => {
-          if (e.code === "Space") {
-            state.paused = !state.paused;
-            e.preventDefault();
-          }
-          if (e.code === "KeyR") location.reload();
-        });
-
-        // boot
-        log("🦴 死灵法师准备就绪。按按钮召唤亡灵。", "#b89860");
-        log("💡 战斗自动进行，你只能召唤、设优先级、看戏。", "#8888c8");
-        document.getElementById("banner").textContent = "准备第 1 波…";
+        log("🦴 准备就绪 · WASD 移动 · 自动普攻 · 自动召唤", "#b89860");
+        log(
+          "💡 杀敌得 XP，升级选 perk（含解锁射手/法师），生存 5 分钟后击败 BOSS 即胜利。",
+          "#8888c8",
+        );
         updatePanel();
         loop();
       })();

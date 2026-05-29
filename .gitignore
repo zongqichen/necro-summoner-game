@@ -1,1 +1,3 @@
-necro-summoner-game/
+# Bulk source mirrors of upstream art repos — kept locally only.
+# We commit only the 4 actually-used PNGs in /public/.
+assets/

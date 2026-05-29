@@ -142,6 +142,118 @@
         margin-bottom: 14px;
         text-shadow: 0 0 12px rgba(184, 152, 96, 0.45);
       }
+      #crypt {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.82);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 11;
+        padding: 12px;
+        overflow: auto;
+      }
+      #crypt.show {
+        display: flex;
+      }
+      #crypt .box {
+        background: linear-gradient(180deg, #1f1f2a 0%, #14141c 100%);
+        border: 2px solid #b89860;
+        padding: 22px 24px;
+        max-width: 560px;
+        width: 100%;
+        box-shadow:
+          0 0 0 1px rgba(184, 152, 96, 0.15),
+          0 0 50px rgba(184, 152, 96, 0.22),
+          0 12px 40px rgba(0, 0, 0, 0.6);
+      }
+      #crypt h2 {
+        color: #d8c890;
+        font-size: 20px;
+        margin-bottom: 6px;
+        text-align: center;
+        text-shadow: 0 0 12px rgba(184, 152, 96, 0.45);
+      }
+      #crypt .runstats {
+        font-size: 12px;
+        opacity: 0.75;
+        text-align: center;
+        margin-bottom: 14px;
+        line-height: 1.7;
+      }
+      #crypt .essbar {
+        font-size: 13px;
+        color: #d8c890;
+        text-align: center;
+        margin-bottom: 14px;
+      }
+      #crypt .upgrade {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        background: #2a2a36;
+        border: 1px solid #4a4a5a;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+      #crypt .upgrade .info b {
+        color: #d8c890;
+        display: block;
+        margin-bottom: 2px;
+      }
+      #crypt .upgrade .info .desc {
+        opacity: 0.75;
+        font-size: 11px;
+      }
+      #crypt .upgrade button {
+        background: #b89860;
+        color: #16161e;
+        border: none;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: bold;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      #crypt .upgrade button:hover {
+        background: #d8c890;
+      }
+      #crypt .upgrade button:disabled {
+        background: #3a3a4a;
+        color: #6a6a7a;
+        cursor: default;
+      }
+      #crypt .upgrade.maxed .info b {
+        color: #80c850;
+      }
+      #crypt .footer {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      #crypt .footer button {
+        flex: 1;
+        padding: 10px;
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        border: 1px solid #b89860;
+        background: transparent;
+        color: #b89860;
+      }
+      #crypt .footer button.primary {
+        background: #b89860;
+        color: #16161e;
+        font-weight: bold;
+      }
+      #crypt .footer button:hover {
+        background: #d8c890;
+        color: #16161e;
+        border-color: #d8c890;
+      }
       #levelup .perks {
         display: flex;
         gap: 12px;
@@ -272,6 +384,9 @@
         <div class="stat">
           <span data-i18n="killsLabel"></span><b id="kills">0</b>
         </div>
+        <div class="stat">
+          <span data-i18n="essenceLabel"></span><b id="essence">0</b>
+        </div>
         <hr />
         <div style="font-size: 11px; opacity: 0.7" data-i18n="controls"></div>
         <div>
@@ -291,6 +406,21 @@
           <button id="btn-pause" data-i18n="pauseBtn"></button>
           <button id="btn-restart" data-i18n="restartBtn"></button>
         </div>
+        <button
+          id="btn-crypt"
+          data-i18n="cryptBtn"
+          style="
+            width: 100%;
+            margin-top: 6px;
+            background: #2a2a36;
+            color: #d8c890;
+            border: 1px solid #b89860;
+            padding: 6px;
+            font-family: inherit;
+            cursor: pointer;
+            font-size: 12px;
+          "
+        ></button>
         <hr />
         <div style="font-size: 11px; opacity: 0.7" data-i18n="targeting"></div>
         <button
@@ -325,6 +455,26 @@
       </div>
     </div>
 
+    <div id="crypt">
+      <div class="box">
+        <h2 data-i18n="cryptTitle"></h2>
+        <div class="runstats" id="crypt-runstats"></div>
+        <div class="essbar">
+          <span data-i18n="essenceLabel"></span>
+          <b id="crypt-total">0</b>
+        </div>
+        <div id="crypt-list"></div>
+        <div class="footer">
+          <button id="crypt-close" data-i18n="cryptClose"></button>
+          <button
+            id="crypt-restart"
+            class="primary"
+            data-i18n="cryptRestart"
+          ></button>
+        </div>
+      </div>
+    </div>
+
     <script>
       (() => {
         // ============================================================
@@ -340,6 +490,42 @@
             soulsLabel: "💀 Souls",
             armyLabel: "🦴 Army",
             killsLabel: "🗡 Kills",
+            essenceLabel: "✨ Essence",
+            cryptBtn: "✨ Crypt of Souls",
+            cryptTitle: "✨ Crypt of Souls",
+            cryptClose: "← Back",
+            cryptRestart: "↻ Restart with bonuses",
+            cryptRunStats: (souls, gained) =>
+              `Souls earned this run: ${souls} → +${gained} essence`,
+            cryptNoRun: "No run yet — survive a round to earn essence.",
+            cryptMaxed: "MAX",
+            cryptCost: (n) => `${n} ✨`,
+            upgrades: {
+              vigor: {
+                name: "Vigor",
+                desc: "+10 max HP at run start",
+              },
+              reaper: {
+                name: "Reaper",
+                desc: "+15% soul pickup radius",
+              },
+              throne: {
+                name: "Throne",
+                desc: "+1 max army size",
+              },
+              awKnight: {
+                name: "Awakened Knight",
+                desc: "Start each run with the knight unlocked",
+              },
+              awAssassin: {
+                name: "Awakened Assassin",
+                desc: "Start each run with the assassin unlocked",
+              },
+              awBerserker: {
+                name: "Awakened Berserker",
+                desc: "Start each run with the berserker unlocked",
+              },
+            },
             controls: "Controls",
             moveHint: "to move",
             autoHint: "Auto-attack · Auto-summon",
@@ -469,6 +655,42 @@
             soulsLabel: "💀 魂魄",
             armyLabel: "🦴 军团",
             killsLabel: "🗡 击杀",
+            essenceLabel: "✨ 残魂",
+            cryptBtn: "✨ 灵魂墓室",
+            cryptTitle: "✨ 灵魂墓室",
+            cryptClose: "← 返回",
+            cryptRestart: "↻ 携加成重开",
+            cryptRunStats: (souls, gained) =>
+              `本局收集 souls：${souls} → +${gained} 残魂`,
+            cryptNoRun: "尚未游玩 — 生存一局即可获得残魂。",
+            cryptMaxed: "已满",
+            cryptCost: (n) => `${n} ✨`,
+            upgrades: {
+              vigor: {
+                name: "活力",
+                desc: "开局 +10 最大生命",
+              },
+              reaper: {
+                name: "收割",
+                desc: "灵魂吸附半径 +15%",
+              },
+              throne: {
+                name: "王座",
+                desc: "军团上限 +1",
+              },
+              awKnight: {
+                name: "觉醒：骑士",
+                desc: "每局开局解锁骷髅骑士",
+              },
+              awAssassin: {
+                name: "觉醒：刺客",
+                desc: "每局开局解锁骷髅刺客",
+              },
+              awBerserker: {
+                name: "觉醒：狂战士",
+                desc: "每局开局解锁骷髅狂战士",
+              },
+            },
             controls: "操作",
             moveHint: "移动",
             autoHint: "自动普攻 · 自动召唤",
@@ -761,8 +983,109 @@
         }
 
         // ============================================================
+        // META PROGRESSION (persistent across runs)
+        // ============================================================
+        const META_KEY = "necro:meta:v1";
+        const META_UPGRADES = [
+          {
+            id: "vigor",
+            max: 5,
+            costs: [40, 80, 160, 320, 640],
+          },
+          {
+            id: "reaper",
+            max: 3,
+            costs: [60, 120, 240],
+          },
+          {
+            id: "throne",
+            max: 3,
+            costs: [100, 200, 400],
+          },
+          { id: "awKnight", max: 1, costs: [200] },
+          { id: "awAssassin", max: 1, costs: [200] },
+          { id: "awBerserker", max: 1, costs: [200] },
+        ];
+        const meta = (() => {
+          let data = { essence: 0, levels: {}, lastRun: null };
+          try {
+            const raw = localStorage.getItem(META_KEY);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && typeof parsed === "object") {
+                data.essence = Math.max(0, parsed.essence | 0);
+                data.levels =
+                  parsed.levels && typeof parsed.levels === "object"
+                    ? parsed.levels
+                    : {};
+                data.lastRun = parsed.lastRun || null;
+              }
+            }
+          } catch (_) {}
+          for (const u of META_UPGRADES) {
+            if (typeof data.levels[u.id] !== "number") data.levels[u.id] = 0;
+            data.levels[u.id] = Math.max(
+              0,
+              Math.min(u.max, data.levels[u.id] | 0),
+            );
+          }
+          function save() {
+            try {
+              localStorage.setItem(META_KEY, JSON.stringify(data));
+            } catch (_) {}
+          }
+          function lvl(id) {
+            return data.levels[id] | 0;
+          }
+          function nextCost(id) {
+            const u = META_UPGRADES.find((x) => x.id === id);
+            const l = lvl(id);
+            if (!u || l >= u.max) return null;
+            return u.costs[l];
+          }
+          function buy(id) {
+            const c = nextCost(id);
+            if (c == null || data.essence < c) return false;
+            data.essence -= c;
+            data.levels[id] = lvl(id) + 1;
+            save();
+            return true;
+          }
+          function awardRun(souls, kills, won) {
+            const gained =
+              Math.floor((souls | 0) / 10) + (kills | 0) + (won ? 50 : 0);
+            data.essence += gained;
+            data.lastRun = { souls: souls | 0, gained, won: !!won };
+            save();
+            return gained;
+          }
+          function clearLastRun() {
+            data.lastRun = null;
+            save();
+          }
+          return {
+            get essence() {
+              return data.essence;
+            },
+            lvl,
+            nextCost,
+            buy,
+            awardRun,
+            clearLastRun,
+            get lastRun() {
+              return data.lastRun;
+            },
+          };
+        })();
+
+        // ============================================================
         // STATE
         // ============================================================
+        const META_VIGOR_HP = 10 * meta.lvl("vigor");
+        const META_REAPER_MUL = 1 + 0.15 * meta.lvl("reaper");
+        const META_THRONE_BONUS = meta.lvl("throne");
+        const META_BASE_HP = 120 + META_VIGOR_HP;
+        const META_BASE_MAGNET = Math.floor(80 * META_REAPER_MUL);
         const state = {
           paused: false,
           over: false,
@@ -774,30 +1097,30 @@
           xp: 0,
           level: 1,
           xpNext: 10,
-          maxMinions: 3,
+          maxMinions: 3 + META_THRONE_BONUS,
           priority: "nearest",
           unlocked: {
             warrior: true,
             archer: false,
             mage: false,
-            knight: false,
-            assassin: false,
-            berserker: false,
+            knight: meta.lvl("awKnight") > 0,
+            assassin: meta.lvl("awAssassin") > 0,
+            berserker: meta.lvl("awBerserker") > 0,
           },
           perks: {
             dmg: 1,
             speed: 1,
             atkSpeed: 1,
             hpRegen: 0,
-            soulMagnet: 80,
+            soulMagnet: META_BASE_MAGNET,
             projSpeed: 1,
             summonCdMul: 1,
           },
           player: {
             x: WORLD_W / 2,
             y: WORLD_H / 2,
-            hp: 120,
-            hpMax: 120,
+            hp: META_BASE_HP,
+            hpMax: META_BASE_HP,
             speed: 2.4,
             atkRange: 220,
             atkCd: 0,
@@ -1140,6 +1463,94 @@
           location.reload();
         });
 
+        // ============================================================
+        // CRYPT (meta-progression UI)
+        // ============================================================
+        function finishRun(won) {
+          if (state._awarded) return;
+          state._awarded = true;
+          meta.awardRun(state.souls, state.kills, won);
+          openCrypt(true);
+        }
+        function renderCryptList() {
+          const wrap = document.getElementById("crypt-list");
+          wrap.innerHTML = "";
+          for (const u of META_UPGRADES) {
+            const def = (L.upgrades && L.upgrades[u.id]) || {
+              name: u.id,
+              desc: "",
+            };
+            const cur = meta.lvl(u.id);
+            const cost = meta.nextCost(u.id);
+            const maxed = cost == null;
+            const row = document.createElement("div");
+            row.className = "upgrade" + (maxed ? " maxed" : "");
+            const info = document.createElement("div");
+            info.className = "info";
+            const title = document.createElement("b");
+            title.textContent =
+              def.name +
+              (u.max > 1 ? `  (${cur}/${u.max})` : maxed ? "  ✓" : "");
+            const desc = document.createElement("div");
+            desc.className = "desc";
+            desc.textContent = def.desc;
+            info.appendChild(title);
+            info.appendChild(desc);
+            const btn = document.createElement("button");
+            if (maxed) {
+              btn.textContent = L.cryptMaxed;
+              btn.disabled = true;
+            } else {
+              btn.textContent = L.cryptCost(cost);
+              btn.disabled = meta.essence < cost;
+              btn.addEventListener("click", () => {
+                if (meta.buy(u.id)) renderCrypt();
+              });
+            }
+            row.appendChild(info);
+            row.appendChild(btn);
+            wrap.appendChild(row);
+          }
+        }
+        function renderCrypt() {
+          document.getElementById("crypt-total").textContent = meta.essence;
+          const rs = document.getElementById("crypt-runstats");
+          const lr = meta.lastRun;
+          if (lr) {
+            rs.textContent = L.cryptRunStats(lr.souls, lr.gained);
+            rs.style.display = "";
+          } else {
+            rs.textContent = L.cryptNoRun;
+            rs.style.display = "";
+          }
+          renderCryptList();
+          const essEl = document.getElementById("essence");
+          if (essEl) essEl.textContent = meta.essence;
+        }
+        function openCrypt(fromEnd) {
+          renderCrypt();
+          if (!state.over) state.paused = true;
+          const closeBtn = document.getElementById("crypt-close");
+          closeBtn.style.display = fromEnd && state.over ? "none" : "";
+          document.getElementById("crypt").classList.add("show");
+        }
+        function closeCrypt() {
+          document.getElementById("crypt").classList.remove("show");
+          if (!state.over) state.paused = false;
+        }
+        document
+          .getElementById("btn-crypt")
+          .addEventListener("click", () => openCrypt(false));
+        document
+          .getElementById("crypt-close")
+          .addEventListener("click", closeCrypt);
+        document
+          .getElementById("crypt-restart")
+          .addEventListener("click", () => {
+            meta.clearLastRun();
+            location.reload();
+          });
+
         // language toggle
         function setLang(next) {
           if (!I18N[next] || next === lang) return;
@@ -1171,6 +1582,10 @@
           for (const code of ["en", "zh"]) {
             const btn = document.getElementById("lang-" + code);
             if (btn) btn.classList.toggle("on", lang === code);
+          }
+          // re-render crypt if open (labels/costs use language-specific helpers)
+          if (document.getElementById("crypt").classList.contains("show")) {
+            renderCrypt();
           }
         }
 
@@ -1775,6 +2190,7 @@
                 state.over = true;
                 banner(L.bannerVictory, "#80c850");
                 log(L.logVictory, "#80c850");
+                finishRun(true);
               }
               return false;
             }
@@ -1835,6 +2251,7 @@
             state.over = true;
             banner(L.bannerDeath, "#c83030");
             log(L.logDeath, "#c83030");
+            finishRun(false);
           }
 
           camera.x = clamp(state.player.x - VW / 2, 0, WORLD_W - VW);
@@ -1856,6 +2273,8 @@
           document.getElementById("army").textContent =
             `${state.minions.length}/${state.maxMinions}`;
           document.getElementById("kills").textContent = state.kills;
+          const essEl = document.getElementById("essence");
+          if (essEl) essEl.textContent = meta.essence;
           const cdEl = document.getElementById("cdsummon");
           if (cdEl) {
             if (state.minions.length >= state.maxMinions) {
@@ -2232,7 +2651,8 @@
           }
           if (
             state.paused &&
-            !document.getElementById("levelup").classList.contains("show")
+            !document.getElementById("levelup").classList.contains("show") &&
+            !document.getElementById("crypt").classList.contains("show")
           ) {
             ctx.fillStyle = "rgba(0,0,0,0.55)";
             ctx.fillRect(0, 0, VW, VH);

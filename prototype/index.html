@@ -780,8 +780,8 @@
           player: {
             x: WORLD_W / 2,
             y: WORLD_H / 2,
-            hp: 100,
-            hpMax: 100,
+            hp: 120,
+            hpMax: 120,
             speed: 2.4,
             atkRange: 220,
             atkCd: 0,
@@ -920,10 +920,10 @@
           shaman: {
             kindId: "shaman",
             hp: 36,
-            dmg: 12,
+            dmg: 9,
             speed: 0.9,
-            range: 200,
-            atkCd: 90,
+            range: 160,
+            atkCd: 100,
             soul: 4,
             scale: 0.95,
             kindKey: "male",
@@ -1429,12 +1429,12 @@
             x = 20 + Math.random() * (WORLD_W - 40);
             y = WORLD_H - 20;
           }
-          const scale = 1 + elapsed / 180;
+          const scale = 1 + elapsed / 240;
           state.enemies.push({
             ...k,
             hp: Math.floor(k.hp * scale),
             hpMax: Math.floor(k.hp * scale),
-            dmg: Math.floor(k.dmg * (0.7 + elapsed / 240)),
+            dmg: Math.floor(k.dmg * (0.6 + elapsed / 360)),
             x,
             y,
             cd: 0,
@@ -1708,10 +1708,14 @@
             state.spawnCd--;
             if (state.spawnCd <= 0) {
               const elapsed = GAME_DURATION - state.time;
-              const rate = Math.max(8, 60 - elapsed * 0.18);
+              const rate = Math.max(14, 60 - elapsed * 0.14);
               state.spawnCd = rate;
-              const batch = 1 + Math.floor(elapsed / 60);
-              for (let i = 0; i < batch; i++) spawnEnemy();
+              const batch = 1 + Math.floor(elapsed / 90);
+              const cap = 30;
+              for (let i = 0; i < batch; i++) {
+                if (state.enemies.length >= cap) break;
+                spawnEnemy();
+              }
             }
           }
 

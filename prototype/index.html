@@ -363,6 +363,21 @@
               warrior: "Skeleton Warrior",
               archer: "Skeleton Archer",
               mage: "Skeleton Mage",
+              knight: "Skeleton Knight",
+              assassin: "Skeleton Assassin",
+              berserker: "Skeleton Berserker",
+            },
+            enemies: {
+              rat: "Rat",
+              bandit: "Bandit",
+              wolf: "Wolf",
+              ghoul: "Ghoul",
+              goblin: "Goblin",
+              raider: "Raider",
+              knight: "Black Knight",
+              specter: "Specter",
+              shaman: "Shaman",
+              boss: "BOSS",
             },
             backstories: [
               "lost both parents on the battlefield",
@@ -377,6 +392,16 @@
               "spent their final years in a dungeon",
               "saved their last bread for a child",
               "watched their castle burn",
+              "spent a lifetime hunting wolves",
+              "raised a family in the catacombs",
+              "deserted the army on coronation day",
+              "promised to return by spring",
+              "carved their own gravestone",
+              "drowned defending the ferry",
+              "danced with a queen, forgot her name",
+              "buried their hammer beneath an oak",
+              "broke a vow they had kept for forty years",
+              "died holding a letter, never sent",
             ],
             perks: {
               dmg: { name: "Bone Edge", desc: "All army + mage damage +20%" },
@@ -404,6 +429,18 @@
               unlockMage: {
                 name: "Unlock: Skeleton Mage",
                 desc: "Adds mage to summon pool (high-dmg ranged)",
+              },
+              unlockKnight: {
+                name: "Unlock: Skeleton Knight",
+                desc: "Adds knight to summon pool (tanky melee)",
+              },
+              unlockAssassin: {
+                name: "Unlock: Skeleton Assassin",
+                desc: "Adds assassin to summon pool (burst melee)",
+              },
+              unlockBerserker: {
+                name: "Unlock: Skeleton Berserker",
+                desc: "Adds berserker to summon pool (fast melee)",
               },
             },
           },
@@ -455,6 +492,21 @@
               warrior: "骷髅战士",
               archer: "骷髅射手",
               mage: "骷髅法师",
+              knight: "骷髅骑士",
+              assassin: "骷髅刺客",
+              berserker: "骷髅狂战士",
+            },
+            enemies: {
+              rat: "鼠",
+              bandit: "强盗",
+              wolf: "狼",
+              ghoul: "食尸鬼",
+              goblin: "哥布林",
+              raider: "劫掠者",
+              knight: "黑骑士",
+              specter: "幽魂",
+              shaman: "萨满",
+              boss: "BOSS",
             },
             backstories: [
               "曾在战场上失去双亲",
@@ -469,6 +521,16 @@
               "在地牢中度过余生",
               "为孩子留下最后的面包",
               "目睹自己的城堡焚毁",
+              "毕生追猎恶狼",
+              "在地下墓穴抚养家人",
+              "在加冕日临阵脱逃",
+              "曾承诺春天归来",
+              "亲手为自己刻下墓碑",
+              "守渡口而溺亡",
+              "曾与王后共舞，却忘了她的名字",
+              "把锤子埋在橡树下",
+              "破了守了四十年的誓",
+              "握着一封从未寄出的信而亡",
             ],
             perks: {
               dmg: { name: "骨刃锐化", desc: "全军 + 法师伤害 +20%" },
@@ -487,6 +549,18 @@
               unlockMage: {
                 name: "解锁：骷髅法师",
                 desc: "召唤池加入法师（高伤远程）",
+              },
+              unlockKnight: {
+                name: "解锁：骷髅骑士",
+                desc: "召唤池加入骑士（厚甲近战）",
+              },
+              unlockAssassin: {
+                name: "解锁：骷髅刺客",
+                desc: "召唤池加入刺客（爆发近战）",
+              },
+              unlockBerserker: {
+                name: "解锁：骷髅狂战士",
+                desc: "召唤池加入狂战（迅捷近战）",
               },
             },
           },
@@ -556,6 +630,9 @@
             return;
           TINTS.skelGreen = tintSheet(IMG.skel, "#90ff90");
           TINTS.skelPurple = tintSheet(IMG.skel, "#c890ff");
+          TINTS.skelGray = tintSheet(IMG.skel, "#a8b0c0");
+          TINTS.skelRed = tintSheet(IMG.skel, "#ff6060");
+          TINTS.skelOrange = tintSheet(IMG.skel, "#ffa040");
           TINTS.zombRed = tintSheet(IMG.zomb, "#ff6060");
           TINTS.zombGreen = tintSheet(IMG.zomb, "#80c080");
           TINTS.zombGray = tintSheet(IMG.zomb, "#a0a0a0");
@@ -621,6 +698,16 @@
           "Brienne",
           "Aldric",
           "Mordrek",
+          "Yorick",
+          "Astrid",
+          "Cassian",
+          "Wren",
+          "Doran",
+          "Saela",
+          "Ulric",
+          "Branwen",
+          "Theron",
+          "Mirae",
         ];
         const TITLES = [
           "the Smith",
@@ -638,6 +725,16 @@
           "the Twin",
           "the Plagued",
           "the Eternal",
+          "the Reaper",
+          "the Hollow",
+          "the Wretched",
+          "the Marked",
+          "the Veiled",
+          "the Crowned",
+          "the Witch",
+          "the Oathbreaker",
+          "the Drowned",
+          "the Forgotten",
         ];
         function makeName() {
           const fn =
@@ -663,7 +760,14 @@
           xpNext: 10,
           maxMinions: 3,
           priority: "nearest",
-          unlocked: { warrior: true, archer: false, mage: false },
+          unlocked: {
+            warrior: true,
+            archer: false,
+            mage: false,
+            knight: false,
+            assassin: false,
+            berserker: false,
+          },
           perks: {
             dmg: 1,
             speed: 1,
@@ -758,6 +862,78 @@
             facing: "left",
             color: "#80c080",
           },
+          goblin: {
+            kindId: "goblin",
+            hp: 18,
+            dmg: 6,
+            speed: 1.7,
+            range: 14,
+            atkCd: 45,
+            soul: 1,
+            scale: 0.6,
+            kindKey: "zomb",
+            tint: "zombGreen",
+            facing: "left",
+            color: "#6ea060",
+          },
+          raider: {
+            kindId: "raider",
+            hp: 48,
+            dmg: 13,
+            speed: 1.15,
+            range: 18,
+            atkCd: 60,
+            soul: 3,
+            scale: 0.95,
+            kindKey: "male",
+            tint: "malePurple",
+            facing: "left",
+            color: "#c87848",
+          },
+          knight: {
+            kindId: "knight",
+            hp: 95,
+            dmg: 18,
+            speed: 0.85,
+            range: 22,
+            atkCd: 70,
+            soul: 5,
+            scale: 1.05,
+            kindKey: "male",
+            facing: "left",
+            color: "#9090a8",
+          },
+          specter: {
+            kindId: "specter",
+            hp: 38,
+            dmg: 16,
+            speed: 1.55,
+            range: 16,
+            atkCd: 55,
+            soul: 3,
+            scale: 0.9,
+            kindKey: "zomb",
+            tint: "zombGray",
+            facing: "left",
+            color: "#a0c0e0",
+          },
+          shaman: {
+            kindId: "shaman",
+            hp: 36,
+            dmg: 12,
+            speed: 0.9,
+            range: 200,
+            atkCd: 90,
+            soul: 4,
+            scale: 0.95,
+            kindKey: "male",
+            tint: "malePurple",
+            facing: "left",
+            color: "#c860c8",
+            attack: "ranged",
+            projColor: "#ff80ff",
+            projSpeed: 4,
+          },
           boss: {
             kindId: "boss",
             hp: 600,
@@ -775,22 +951,38 @@
         };
         function pickEnemyKind(elapsed) {
           const r = Math.random();
-          if (elapsed < 30) return ENEMY_KINDS.rat;
-          if (elapsed < 90)
-            return r < 0.6 ? ENEMY_KINDS.rat : ENEMY_KINDS.bandit;
-          if (elapsed < 180)
-            return r < 0.4
-              ? ENEMY_KINDS.bandit
-              : r < 0.75
-                ? ENEMY_KINDS.wolf
-                : ENEMY_KINDS.rat;
-          if (elapsed < 270)
-            return r < 0.4
-              ? ENEMY_KINDS.wolf
-              : r < 0.7
-                ? ENEMY_KINDS.ghoul
-                : ENEMY_KINDS.bandit;
-          return r < 0.5 ? ENEMY_KINDS.ghoul : ENEMY_KINDS.wolf;
+          // 0–30s : easy intro
+          if (elapsed < 30) {
+            return r < 0.7 ? ENEMY_KINDS.rat : ENEMY_KINDS.goblin;
+          }
+          // 30–90s : add bandits
+          if (elapsed < 90) {
+            if (r < 0.35) return ENEMY_KINDS.rat;
+            if (r < 0.65) return ENEMY_KINDS.goblin;
+            return ENEMY_KINDS.bandit;
+          }
+          // 90–180s : wolves + raiders + first shamans
+          if (elapsed < 180) {
+            if (r < 0.2) return ENEMY_KINDS.bandit;
+            if (r < 0.45) return ENEMY_KINDS.wolf;
+            if (r < 0.65) return ENEMY_KINDS.raider;
+            if (r < 0.8) return ENEMY_KINDS.goblin;
+            return ENEMY_KINDS.shaman;
+          }
+          // 180–270s : specters + ghouls + knights
+          if (elapsed < 270) {
+            if (r < 0.25) return ENEMY_KINDS.wolf;
+            if (r < 0.5) return ENEMY_KINDS.ghoul;
+            if (r < 0.7) return ENEMY_KINDS.specter;
+            if (r < 0.85) return ENEMY_KINDS.knight;
+            return ENEMY_KINDS.shaman;
+          }
+          // 270s+ : late-game heavy mix
+          if (r < 0.3) return ENEMY_KINDS.knight;
+          if (r < 0.55) return ENEMY_KINDS.ghoul;
+          if (r < 0.75) return ENEMY_KINDS.specter;
+          if (r < 0.9) return ENEMY_KINDS.shaman;
+          return ENEMY_KINDS.raider;
         }
 
         // ============================================================
@@ -833,6 +1025,39 @@
             attack: "ranged",
             projColor: "#c890ff",
             projSpeed: 4.5,
+          },
+          knight: {
+            hp: 80,
+            dmg: 12,
+            range: 26,
+            speed: 1.5,
+            atkCd: 50,
+            sheetKey: "skel",
+            tint: "skelGray",
+            color: "#a8b0c0",
+            attack: "melee",
+          },
+          assassin: {
+            hp: 18,
+            dmg: 22,
+            range: 22,
+            speed: 2.4,
+            atkCd: 35,
+            sheetKey: "skel",
+            tint: "skelRed",
+            color: "#ff6060",
+            attack: "melee",
+          },
+          berserker: {
+            hp: 32,
+            dmg: 11,
+            range: 22,
+            speed: 2.2,
+            atkCd: 28,
+            sheetKey: "skel",
+            tint: "skelOrange",
+            color: "#ffa040",
+            attack: "melee",
           },
         };
 
@@ -1004,6 +1229,9 @@
           if (state.unlocked.warrior) pool.push("warrior");
           if (state.unlocked.archer) pool.push("archer");
           if (state.unlocked.mage) pool.push("mage");
+          if (state.unlocked.knight) pool.push("knight");
+          if (state.unlocked.assassin) pool.push("assassin");
+          if (state.unlocked.berserker) pool.push("berserker");
           return pool[Math.floor(Math.random() * pool.length)] || "warrior";
         }
         function autoSummonOne() {
@@ -1108,6 +1336,30 @@
             available: (s) => !s.unlocked.mage,
             apply: (s) => {
               s.unlocked.mage = true;
+            },
+          },
+          {
+            id: "unlockKnight",
+            once: true,
+            available: (s) => !s.unlocked.knight,
+            apply: (s) => {
+              s.unlocked.knight = true;
+            },
+          },
+          {
+            id: "unlockAssassin",
+            once: true,
+            available: (s) => !s.unlocked.assassin,
+            apply: (s) => {
+              s.unlocked.assassin = true;
+            },
+          },
+          {
+            id: "unlockBerserker",
+            once: true,
+            available: (s) => !s.unlocked.berserker,
+            apply: (s) => {
+              s.unlocked.berserker = true;
             },
           },
         ];
@@ -1381,8 +1633,21 @@
             e.moving = false;
             if (e.cd <= 0) {
               e.cd = e.atkCd;
-              tgt.hp -= e.dmg;
-              float(tgt.x, tgt.y, "-" + e.dmg, "#ffaa44");
+              if (e.attack === "ranged") {
+                state.projectiles.push({
+                  x: e.x,
+                  y: e.y,
+                  tx: tgt,
+                  dmg: e.dmg,
+                  color: e.projColor || "#ff80ff",
+                  speed: e.projSpeed || 4,
+                  friendly: false,
+                  from: "enemy",
+                });
+              } else {
+                tgt.hp -= e.dmg;
+                float(tgt.x, tgt.y, "-" + e.dmg, "#ffaa44");
+              }
             }
           }
           if (e.cd > 0) e.cd--;
@@ -1659,7 +1924,17 @@
               ctx.font = "20px serif";
               ctx.fillStyle = m.color || "#c8c0a8";
               ctx.fillText(
-                m.kind === "archer" ? "🏹" : m.kind === "mage" ? "🔥" : "⚔",
+                m.kind === "archer"
+                  ? "🏹"
+                  : m.kind === "mage"
+                    ? "🔥"
+                    : m.kind === "knight"
+                      ? "🛡"
+                      : m.kind === "assassin"
+                        ? "🗡"
+                        : m.kind === "berserker"
+                          ? "🪓"
+                          : "⚔",
                 x,
                 y + 6,
               );

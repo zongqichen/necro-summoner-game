@@ -1721,6 +1721,13 @@
             id: "army",
             apply: (s) => {
               s.maxMinions += 1;
+              while (s.minions.length < s.maxMinions) {
+                if (!autoSummonOne()) break;
+              }
+              s.autoSummonCd = Math.min(
+                s.autoSummonCd,
+                s.autoSummonCdMax * s.perks.summonCdMul,
+              );
             },
           },
           {
@@ -2388,6 +2395,75 @@
           ctx.ellipse(x, y + 14, w, w * 0.35, 0, 0, Math.PI * 2);
           ctx.fill();
         }
+        function drawFixedHud() {
+          const pad = 10;
+          const barH = 14;
+          const hpW = Math.min(220, Math.floor(VW * 0.32));
+          const hpX = pad;
+          const hpY = pad;
+          const hpFrac = Math.max(
+            0,
+            Math.min(1, state.player.hp / state.player.hpMax),
+          );
+          ctx.fillStyle = "rgba(0,0,0,0.6)";
+          ctx.fillRect(hpX - 2, hpY - 2, hpW + 4, barH + 4);
+          ctx.fillStyle = "#1a0c10";
+          ctx.fillRect(hpX, hpY, hpW, barH);
+          const hpGrad = ctx.createLinearGradient(hpX, hpY, hpX + hpW, hpY);
+          hpGrad.addColorStop(0, "#c83040");
+          hpGrad.addColorStop(1, "#f08070");
+          ctx.fillStyle = hpGrad;
+          ctx.fillRect(hpX, hpY, hpW * hpFrac, barH);
+          ctx.strokeStyle = "rgba(184,152,96,0.55)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(hpX + 0.5, hpY + 0.5, hpW - 1, barH - 1);
+          ctx.font = "bold 11px monospace";
+          ctx.textAlign = "left";
+          ctx.fillStyle = "rgba(0,0,0,0.85)";
+          const hpText = `HP ${Math.max(0, Math.ceil(state.player.hp))} / ${state.player.hpMax}`;
+          ctx.fillText(hpText, hpX + 7, hpY + barH - 3);
+          ctx.fillStyle = "#ffe8c8";
+          ctx.fillText(hpText, hpX + 6, hpY + barH - 4);
+
+          const xpW = Math.min(220, Math.floor(VW * 0.32));
+          const xpX = VW - pad - xpW;
+          const xpY = pad;
+          const xpFrac = Math.max(
+            0,
+            Math.min(1, state.xp / Math.max(1, state.xpNext)),
+          );
+          ctx.fillStyle = "rgba(0,0,0,0.6)";
+          ctx.fillRect(xpX - 2, xpY - 2, xpW + 4, barH + 4);
+          ctx.fillStyle = "#0c1018";
+          ctx.fillRect(xpX, xpY, xpW, barH);
+          const xpGrad = ctx.createLinearGradient(xpX, xpY, xpX + xpW, xpY);
+          xpGrad.addColorStop(0, "#7060c0");
+          xpGrad.addColorStop(1, "#c8a0ff");
+          ctx.fillStyle = xpGrad;
+          ctx.fillRect(xpX, xpY, xpW * xpFrac, barH);
+          ctx.strokeStyle = "rgba(184,152,96,0.55)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(xpX + 0.5, xpY + 0.5, xpW - 1, barH - 1);
+          ctx.textAlign = "right";
+          const xpText = `LV ${state.level}  ${state.xp}/${state.xpNext}`;
+          ctx.fillStyle = "rgba(0,0,0,0.85)";
+          ctx.fillText(xpText, xpX + xpW - 5, xpY + barH - 3);
+          ctx.fillStyle = "#ffe8c8";
+          ctx.fillText(xpText, xpX + xpW - 6, xpY + barH - 4);
+
+          const m = Math.floor(state.time / 60),
+            s = state.time % 60;
+          const tStr = `${m}:${s.toString().padStart(2, "0")}`;
+          ctx.font = "bold 16px monospace";
+          ctx.textAlign = "center";
+          ctx.fillStyle = "rgba(0,0,0,0.75)";
+          ctx.fillText(tStr, VW / 2 + 1, pad + 14);
+          ctx.fillStyle = state.time <= 30 ? "#ff8060" : "#d8c890";
+          ctx.fillText(tStr, VW / 2, pad + 13);
+
+          ctx.lineWidth = 1;
+          ctx.textAlign = "center";
+        }
         function hpBar(x, y, w, frac, color) {
           ctx.fillStyle = "rgba(0,0,0,0.85)";
           ctx.fillRect(x - w / 2 - 1, y - 1, w + 2, 5);
@@ -2641,6 +2717,8 @@
             ctx.arc(cx, cy, 3, 0, Math.PI * 2);
             ctx.fill();
           }
+
+          drawFixedHud();
 
           if (!ready) {
             ctx.fillStyle = "rgba(0,0,0,0.7)";

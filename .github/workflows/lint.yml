@@ -1,0 +1,44 @@
+name: Lint
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    name: HTML inline JS syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Validate inline <script> blocks parse
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const files = ['prototype/index.html','index.html'];
+            let bad = 0;
+            for (const f of files) {
+              if (!fs.existsSync(f)) continue;
+              const html = fs.readFileSync(f, 'utf8');
+              const re = /<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g;
+              let m, i = 0;
+              while ((m = re.exec(html))) {
+                i++;
+                try { new Function(m[1]); }
+                catch (e) {
+                  console.error(\`[\${f}] script #\${i}: \${e.message}\`);
+                  bad++;
+                }
+              }
+              console.log(\`[\${f}] checked \${i} script block(s)\`);
+            }
+            process.exit(bad ? 1 : 0);
+          "

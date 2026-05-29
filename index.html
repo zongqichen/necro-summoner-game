@@ -1,12 +1,219 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Necro Summoner</title>
-    <meta http-equiv="refresh" content="0; url=./prototype/" />
-    <link rel="canonical" href="./prototype/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d0d12" />
+    <title>Necro Summoner — A Necromancer Auto-Combat Prototype</title>
+    <meta
+      name="description"
+      content="A 5-minute survival prototype. Move, raise named skeletons, watch them permadeath. Pure HTML/Canvas, plays on phone or desktop. Open source."
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #0d0d12;
+        color: #d8d4c8;
+        font-family: "Courier New", monospace;
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 32px 18px 60px;
+      }
+      main {
+        max-width: 720px;
+        width: 100%;
+      }
+      h1 {
+        font-size: 32px;
+        letter-spacing: 4px;
+        color: #b89860;
+        text-align: center;
+        margin-bottom: 4px;
+      }
+      .tagline {
+        text-align: center;
+        opacity: 0.65;
+        font-size: 13px;
+        margin-bottom: 28px;
+      }
+      .cta-row {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 28px 0 36px;
+      }
+      .cta {
+        display: inline-block;
+        background: #b89860;
+        color: #16161e;
+        text-decoration: none;
+        padding: 14px 28px;
+        font-size: 15px;
+        letter-spacing: 2px;
+        font-weight: bold;
+        border: 2px solid #b89860;
+        transition: 0.15s;
+      }
+      .cta:hover {
+        background: #d8c890;
+        border-color: #d8c890;
+      }
+      .cta.alt {
+        background: transparent;
+        color: #b89860;
+      }
+      .cta.alt:hover {
+        background: rgba(184, 152, 96, 0.1);
+        color: #d8c890;
+      }
+      h2 {
+        color: #b89860;
+        font-size: 16px;
+        letter-spacing: 1.5px;
+        margin: 28px 0 8px;
+        border-bottom: 1px solid #3a3a4a;
+        padding-bottom: 4px;
+      }
+      ul {
+        padding-left: 22px;
+        font-size: 13px;
+      }
+      li {
+        margin-bottom: 4px;
+      }
+      .feature b {
+        color: #c0a070;
+      }
+      p {
+        font-size: 13px;
+        margin: 6px 0;
+      }
+      .kbd {
+        background: #2a2a36;
+        border: 1px solid #4a4a5a;
+        padding: 1px 6px;
+        font-size: 11px;
+      }
+      footer {
+        margin-top: 40px;
+        font-size: 11px;
+        text-align: center;
+        opacity: 0.55;
+      }
+      footer a {
+        color: #80a8c8;
+        text-decoration: none;
+      }
+      footer a:hover {
+        color: #b0c8e0;
+      }
+      .langline {
+        text-align: center;
+        font-size: 12px;
+        margin-top: 18px;
+        opacity: 0.7;
+      }
+      .langline a {
+        color: #b89860;
+        text-decoration: none;
+        margin: 0 6px;
+      }
+    </style>
   </head>
   <body>
-    <a href="./prototype/">Enter game →</a>
+    <main>
+      <h1>NECRO SUMMONER</h1>
+      <p class="tagline">
+        A necromancer auto-combat prototype<br />
+        Move, raise named skeletons, watch them permadeath
+      </p>
+
+      <div class="cta-row">
+        <a class="cta" href="./prototype/">▶ Play in browser</a>
+        <a
+          class="cta alt"
+          href="https://github.com/zongqichen/necro-summoner-game"
+          >Source on GitHub</a
+        >
+      </div>
+
+      <h2>What is this</h2>
+      <ul class="feature">
+        <li>
+          <b>5-minute survival run</b> — Vampire-Survivors-style movement and
+          auto-attack, but the army is summoned for you.
+        </li>
+        <li>
+          <b>Auto-summoned skeleton legion</b> — warrior, archer, mage; unlock
+          new types as perks when you level up.
+        </li>
+        <li>
+          <b>Each minion is a person</b> — random first name, title, and
+          backstory. Their permadeath is logged.
+        </li>
+        <li>
+          <b>Single-screen arena</b> — enemies enter from any of the four edges,
+          difficulty ramps every minute, BOSS at 5:00.
+        </li>
+        <li>
+          <b>Zero-dependency</b> — pure HTML5 Canvas + vanilla JS. No build
+          step. ~7 MB total. Free art under CC-BY-SA 3.0.
+        </li>
+      </ul>
+
+      <h2>Controls</h2>
+      <p>
+        <b>Desktop:</b>
+        <span class="kbd">WASD</span> / <span class="kbd">↑↓←→</span> to move ·
+        <span class="kbd">Space</span> pause ·
+        <span class="kbd">R</span> restart
+      </p>
+      <p><b>Mobile:</b> drag anywhere on the play area to move</p>
+      <p>
+        Auto-attack and minion summoning happen on their own — focus on
+        positioning.
+      </p>
+
+      <h2>Languages</h2>
+      <p>
+        The game UI is available in English and 中文 (Chinese). Use the language
+        switcher in the side panel.
+      </p>
+
+      <h2>Status</h2>
+      <p>
+        Pre-alpha prototype. The current build (v0.2) tests the core loop:
+        <i
+          >does an auto-summoned, named, mortal minion create emotional
+          attachment in 5 minutes?</i
+        >
+      </p>
+
+      <footer>
+        <a href="https://github.com/zongqichen/necro-summoner-game"
+          >Repository</a
+        >
+        ·
+        <a
+          href="https://github.com/zongqichen/necro-summoner-game/blob/master/LICENSE-ART.md"
+          >Art credits</a
+        >
+        ·
+        <a href="https://github.com/zongqichen/necro-summoner-game/security"
+          >Security</a
+        >
+        <br />
+        Code is from-scratch. Skeleton/zombie body sprites: LPC project
+        (CC-BY-SA 3.0). Dungeon tileset: flare-game (CC-BY-SA 3.0).
+      </footer>
+    </main>
   </body>
 </html>

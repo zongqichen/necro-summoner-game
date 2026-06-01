@@ -464,6 +464,32 @@
           <b id="crypt-total">0</b>
         </div>
         <div id="crypt-list"></div>
+        <h3
+          id="hall-title"
+          data-i18n="hallTitle"
+          style="
+            color: #d8c890;
+            font-size: 14px;
+            margin: 14px 0 6px;
+            text-align: center;
+            border-top: 1px dashed #3a3a4a;
+            padding-top: 12px;
+          "
+        ></h3>
+        <div
+          id="hall-list"
+          style="
+            font-size: 11px;
+            line-height: 1.7;
+            max-height: 140px;
+            overflow-y: auto;
+            color: #b0a890;
+            padding: 4px 8px;
+            background: #1a1a22;
+            border: 1px solid #3a3a4a;
+            margin-bottom: 12px;
+          "
+        ></div>
         <div class="footer">
           <button id="crypt-close" data-i18n="cryptClose"></button>
           <button
@@ -525,6 +551,14 @@
                 name: "Awakened Berserker",
                 desc: "Start each run with the berserker unlocked",
               },
+              awArcher: {
+                name: "Awakened Archer",
+                desc: "Start each run with the archer unlocked",
+              },
+              awMage: {
+                name: "Awakened Mage",
+                desc: "Start each run with the mage unlocked",
+              },
             },
             controls: "Controls",
             moveHint: "to move",
@@ -559,8 +593,17 @@
             logPickPerk: (name) => `⚡ Picked perk: ${name}`,
             logSummon: (label, name, story) =>
               `🦴 ${label} ${name} —— ${story}`,
-            logMinionDeath: (name, story, kills) =>
-              `☠ ${name} permadeath — ${story} (kills: ${kills})`,
+            logMinionDeath: (name, story, kills, ageSec, epitaph) =>
+              `☠ ${name} — ${epitaph || `kills: ${kills}`} · fell after ${ageSec}s — ${story}`,
+            // Tiered epitaph text keyed off kill count. The plain "(kills: 0)"
+            // line broke the emotional read of the death moment.
+            epitaphTier: (k) => {
+              if (k <= 0) return "fell before drawing blood";
+              if (k <= 2) return `took ${k} with them`;
+              if (k <= 5) return "a soldier to the last";
+              if (k <= 9) return "veteran of the vanguard";
+              return "the army's finest";
+            },
             minions: {
               warrior: "Skeleton Warrior",
               archer: "Skeleton Archer",
@@ -644,7 +687,23 @@
                 name: "Unlock: Skeleton Berserker",
                 desc: "Adds berserker to summon pool (fast melee)",
               },
+              boneFortress: {
+                name: "Bone Fortress",
+                desc: "Melee minions: +30% max HP (current and future)",
+              },
+              etherealVolley: {
+                name: "Ethereal Volley",
+                desc: "Archers fire a second arrow at 20° spread",
+              },
+              soulTide: {
+                name: "Soul Tide",
+                desc: "On any minion death: +5% army damage (max 5 stacks)",
+              },
             },
+            hallTitle: "🪦 Hall of the Fallen",
+            hallEmpty: "No minions have fallen yet.",
+            hallEntry: (name, kind, kills, ageSec) =>
+              `${name} · ${kind} · kills ${kills} · lived ${ageSec}s`,
           },
           zh: {
             subtitle:
@@ -690,6 +749,14 @@
                 name: "觉醒：狂战士",
                 desc: "每局开局解锁骷髅狂战士",
               },
+              awArcher: {
+                name: "觉醒：射手",
+                desc: "每局开局解锁骷髅射手",
+              },
+              awMage: {
+                name: "觉醒：法师",
+                desc: "每局开局解锁骷髅法师",
+              },
             },
             controls: "操作",
             moveHint: "移动",
@@ -724,8 +791,15 @@
             logPickPerk: (name) => `⚡ 选择 perk: ${name}`,
             logSummon: (label, name, story) =>
               `🦴 ${label} ${name} —— ${story}`,
-            logMinionDeath: (name, story, kills) =>
-              `☠ ${name} 永久死亡 — ${story}（生前击杀 ${kills}）`,
+            logMinionDeath: (name, story, kills, ageSec, epitaph) =>
+              `☠ ${name} — ${epitaph || `击杀 ${kills}`} · 存活 ${ageSec}s — ${story}`,
+            epitaphTier: (k) => {
+              if (k <= 0) return "未及挥剑而陨";
+              if (k <= 2) return `带走了 ${k} 个`;
+              if (k <= 5) return "战至最后一刻";
+              if (k <= 9) return "前锋老兵";
+              return "军团之最";
+            },
             minions: {
               warrior: "骷髅战士",
               archer: "骷髅射手",
@@ -800,7 +874,23 @@
                 name: "解锁：骷髅狂战士",
                 desc: "召唤池加入狂战（迅捷近战）",
               },
+              boneFortress: {
+                name: "白骨壁垒",
+                desc: "近战召唤物最大生命 +30%（含未来召唤）",
+              },
+              etherealVolley: {
+                name: "幽冥连射",
+                desc: "射手追加一支 20° 偏角的箭",
+              },
+              soulTide: {
+                name: "亡魂浪潮",
+                desc: "任一召唤物死亡：军团伤害 +5%（最多 5 层）",
+              },
             },
+            hallTitle: "🪦 阵亡之厅",
+            hallEmpty: "尚未有召唤物殒命。",
+            hallEntry: (name, kind, kills, ageSec) =>
+              `${name} · ${kind} · 击杀 ${kills} · 存活 ${ageSec}s`,
           },
         };
         let lang =
@@ -832,7 +922,10 @@
           skel: ASSETS + "/skeleton.png",
           zomb: ASSETS + "/zombie.png",
           male: ASSETS + "/male_walk.png",
-          dungeon: ASSETS + "/tileset_dungeon.png",
+          // pre-cropped 256x256 floor tile (the only region the original
+          // tileset_dungeon.png ever sampled). Cuts first-load from 6.6 MB
+          // to ~46 KB and unblocks mobile-LTE play.
+          dungeon: ASSETS + "/tileset_floor.png",
         };
         const IMG = {};
         let loaded = 0,
@@ -985,7 +1078,13 @@
         // ============================================================
         // META PROGRESSION (persistent across runs)
         // ============================================================
-        const META_KEY = "necro:meta:v1";
+        // META key uses an explicit schema version. v1 = original (no fallen[]).
+        // v2 adds fallen[] for the cross-run Hall of the Fallen. We MUST read
+        // v1 first and migrate forward — silently dropping v1 on any parse
+        // hiccup would wipe every player's Crypt progress on update.
+        const META_KEY_V1 = "necro:meta:v1";
+        const META_KEY = "necro:meta:v2";
+        const FALLEN_CAP = 30;
         const META_UPGRADES = [
           {
             id: "vigor",
@@ -1005,23 +1104,41 @@
           { id: "awKnight", max: 1, costs: [200] },
           { id: "awAssassin", max: 1, costs: [200] },
           { id: "awBerserker", max: 1, costs: [200] },
+          { id: "awArcher", max: 1, costs: [200] },
+          { id: "awMage", max: 1, costs: [200] },
         ];
         const meta = (() => {
-          let data = { essence: 0, levels: {}, lastRun: null };
+          let data = { essence: 0, levels: {}, lastRun: null, fallen: [] };
+          // Try v2 first, then v1. Parse errors are NEVER swallowed into a
+          // reset — we keep whatever fields parsed and only blank the rest.
+          let raw = null;
+          let fromV1 = false;
           try {
-            const raw = localStorage.getItem(META_KEY);
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              if (parsed && typeof parsed === "object") {
-                data.essence = Math.max(0, parsed.essence | 0);
-                data.levels =
-                  parsed.levels && typeof parsed.levels === "object"
-                    ? parsed.levels
-                    : {};
-                data.lastRun = parsed.lastRun || null;
-              }
-            }
+            raw = localStorage.getItem(META_KEY);
           } catch (_) {}
+          if (!raw) {
+            try {
+              raw = localStorage.getItem(META_KEY_V1);
+              if (raw) fromV1 = true;
+            } catch (_) {}
+          }
+          if (raw) {
+            let parsed = null;
+            try {
+              parsed = JSON.parse(raw);
+            } catch (_) {
+              parsed = null;
+            }
+            if (parsed && typeof parsed === "object") {
+              data.essence = Math.max(0, parsed.essence | 0);
+              data.levels =
+                parsed.levels && typeof parsed.levels === "object"
+                  ? parsed.levels
+                  : {};
+              data.lastRun = parsed.lastRun || null;
+              data.fallen = Array.isArray(parsed.fallen) ? parsed.fallen : [];
+            }
+          }
           for (const u of META_UPGRADES) {
             if (typeof data.levels[u.id] !== "number") data.levels[u.id] = 0;
             data.levels[u.id] = Math.max(
@@ -1029,11 +1146,35 @@
               Math.min(u.max, data.levels[u.id] | 0),
             );
           }
+          // Sanitise fallen[] entries — drop anything malformed but keep
+          // partial data where possible.
+          data.fallen = data.fallen
+            .filter((f) => f && typeof f === "object" && f.name)
+            .map((f) => ({
+              name: String(f.name).slice(0, 40),
+              kind: String(f.kind || "warrior"),
+              kills: Math.max(0, f.kills | 0),
+              ageSec: Math.max(0, f.ageSec | 0),
+              storyId: f.storyId | 0,
+              runIndex: f.runIndex | 0,
+            }))
+            .slice(-FALLEN_CAP);
           function save() {
             try {
               localStorage.setItem(META_KEY, JSON.stringify(data));
+              // Once we've persisted under v2, retire v1 so future loads
+              // don't preferentially see the stale copy.
+              if (fromV1) {
+                try {
+                  localStorage.removeItem(META_KEY_V1);
+                } catch (_) {}
+                fromV1 = false;
+              }
             } catch (_) {}
           }
+          // Migrate immediately if loaded from v1 so the v2 key exists
+          // even before the next awardRun.
+          if (fromV1) save();
           function lvl(id) {
             return data.levels[id] | 0;
           }
@@ -1051,11 +1192,28 @@
             save();
             return true;
           }
-          function awardRun(souls, kills, won) {
+          function awardRun(souls, kills, won, fallenThisRun) {
             const gained =
               Math.floor((souls | 0) / 10) + (kills | 0) + (won ? 50 : 0);
             data.essence += gained;
             data.lastRun = { souls: souls | 0, gained, won: !!won };
+            if (Array.isArray(fallenThisRun) && fallenThisRun.length) {
+              const runIndex =
+                (data.fallen[data.fallen.length - 1]?.runIndex || 0) + 1;
+              for (const f of fallenThisRun) {
+                data.fallen.push({
+                  name: String(f.name).slice(0, 40),
+                  kind: String(f.kind || "warrior"),
+                  kills: Math.max(0, f.kills | 0),
+                  ageSec: Math.max(0, f.ageSec | 0),
+                  storyId: f.storyId | 0,
+                  runIndex,
+                });
+              }
+              if (data.fallen.length > FALLEN_CAP) {
+                data.fallen = data.fallen.slice(-FALLEN_CAP);
+              }
+            }
             save();
             return gained;
           }
@@ -1074,6 +1232,9 @@
             clearLastRun,
             get lastRun() {
               return data.lastRun;
+            },
+            get fallen() {
+              return data.fallen;
             },
           };
         })();
@@ -1101,8 +1262,8 @@
           priority: "nearest",
           unlocked: {
             warrior: true,
-            archer: false,
-            mage: false,
+            archer: meta.lvl("awArcher") > 0,
+            mage: meta.lvl("awMage") > 0,
             knight: meta.lvl("awKnight") > 0,
             assassin: meta.lvl("awAssassin") > 0,
             berserker: meta.lvl("awBerserker") > 0,
@@ -1140,6 +1301,23 @@
           spawnCd: 60,
           bossSpawned: false,
           touch: { active: false, ox: 0, oy: 0, x: 0, y: 0, dx: 0, dy: 0 },
+          // Within-run record of named-minion deaths. Pushed in the minion
+          // filter, drained into meta.fallen via finishRun(). Separate from
+          // the DOM log so the Hall of the Fallen has a real data source.
+          fallenThisRun: [],
+          // Reveal-card slide queue for newly-summoned minions.
+          summonQueue: [],
+          // Hit-stop ONLY pauses unit/projectile motion. Embers, fx, magnet
+          // and CD timers must continue ticking — see update() guard.
+          hitstop: 0,
+          // Screen-shake magnitude in px; decays each tick. Applied as a
+          // canvas translate at render() entry and reset at end of frame.
+          shake: 0,
+          // Set of perk IDs picked this run — used for synergy gating that
+          // can't be expressed via state.unlocked alone.
+          pickedPerks: {},
+          // Stack count for the Soul Tide synergy perk so we can cap it.
+          soulTideStacks: 0,
         };
         const camera = { x: 0, y: 0 };
 
@@ -1438,6 +1616,13 @@
         window.addEventListener("keyup", (e) => {
           keys[e.code] = false;
         });
+        // Auto-pause when the tab is hidden so a phone notification or
+        // tab-switch doesn't silently kill a 5-min run. We do not auto-resume
+        // — player has to come back and unpause, otherwise a brief flash of
+        // the tab would resume mid-screen-glance.
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden && !state.over) state.paused = true;
+        });
 
         function prioLabel() {
           const k =
@@ -1469,7 +1654,7 @@
         function finishRun(won) {
           if (state._awarded) return;
           state._awarded = true;
-          meta.awardRun(state.souls, state.kills, won);
+          meta.awardRun(state.souls, state.kills, won, state.fallenThisRun);
           openCrypt(true);
         }
         function renderCryptList() {
@@ -1524,6 +1709,31 @@
             rs.style.display = "";
           }
           renderCryptList();
+          // Hall of the Fallen — read meta.fallen[] in reverse (latest first).
+          const hall = document.getElementById("hall-list");
+          if (hall) {
+            hall.innerHTML = "";
+            const list = meta.fallen || [];
+            if (!list.length) {
+              const d = document.createElement("div");
+              d.textContent = L.hallEmpty;
+              d.style.opacity = "0.6";
+              d.style.textAlign = "center";
+              d.style.padding = "8px 0";
+              hall.appendChild(d);
+            } else {
+              for (let i = list.length - 1; i >= 0; i--) {
+                const f = list[i];
+                const d = document.createElement("div");
+                const kindLabel =
+                  (L.minions && L.minions[f.kind]) || f.kind || "";
+                d.textContent = L.hallEntry
+                  ? L.hallEntry(f.name, kindLabel, f.kills, f.ageSec)
+                  : `${f.name} · ${kindLabel} · ${f.kills} · ${f.ageSec}s`;
+                hall.appendChild(d);
+              }
+            }
+          }
           const essEl = document.getElementById("essence");
           if (essEl) essEl.textContent = meta.essence;
         }
@@ -1671,11 +1881,18 @@
           const kind = pickSummonKind();
           const t = MINION_KINDS[kind];
           const id = makeName();
-          state.minions.push({
+          // Bone Fortress: melee minions summoned WHILE the perk is active
+          // also get the +30% hpMax (otherwise back-fills after a death feel
+          // like a downgrade vs the original army).
+          const hasFortress =
+            state.pickedPerks.boneFortress &&
+            (t.attack === "melee" || !t.attack);
+          const hpMax = hasFortress ? Math.floor(t.hp * 1.3) : t.hp;
+          const m = {
             kind,
             ...t,
-            hp: t.hp,
-            hpMax: t.hp,
+            hp: hpMax,
+            hpMax: hpMax,
             x: state.player.x + (Math.random() - 0.5) * 40,
             y: state.player.y + (Math.random() - 0.5) * 40,
             cd: 0,
@@ -1685,11 +1902,26 @@
             name: id.full,
             storyId: id.storyId,
             kills: 0,
-          });
+            age: 0, // ticks alive — drives the Survivor Bond ring
+          };
+          state.minions.push(m);
           log(
             L.logSummon(L.minions[kind], id.full, L.backstories[id.storyId]),
             "#b89860",
           );
+          // Push a reveal card so the player actually reads the name and
+          // backstory at the moment of summon. Cap depth to 2; older cards
+          // get dropped early.
+          state.summonQueue.push({
+            kind,
+            name: id.full,
+            story: L.backstories[id.storyId] || "",
+            life: 102, // ~1.7s at 60 Hz
+            lifeMax: 102,
+          });
+          if (state.summonQueue.length > 2) {
+            state.summonQueue.splice(0, state.summonQueue.length - 2);
+          }
           return true;
         }
 
@@ -1799,6 +2031,67 @@
             available: (s) => !s.unlocked.berserker,
             apply: (s) => {
               s.unlocked.berserker = true;
+            },
+          },
+          // -----------------------------------------------------------------
+          // Synergy perks — gated on prior choices so they show up only when
+          // they actually do something. Build identity layer.
+          // -----------------------------------------------------------------
+          {
+            id: "boneFortress",
+            once: true,
+            // Available once army cap has been raised AND there are 3+ live
+            // melee minions to feel the bonus immediately.
+            available: (s) => {
+              if (s.pickedPerks.boneFortress) return false;
+              if (s.maxMinions <= 3 + META_THRONE_BONUS) return false;
+              const melee = s.minions.filter(
+                (m) => m.attack !== "ranged",
+              ).length;
+              return melee >= 3;
+            },
+            apply: (s) => {
+              s.pickedPerks.boneFortress = true;
+              // Apply +30% hpMax to currently live melee minions.
+              // Only hpMax — NOT current hp — so the perk doesn't act as
+              // a free heal that trivialises the last 60s of the run.
+              for (const m of s.minions) {
+                if (m.attack === "ranged") continue;
+                const newMax = Math.floor(m.hpMax * 1.3);
+                m.hpMax = newMax;
+                // Cap current hp to new max only if it would exceed it
+                // (no instant heal, but no clipping either).
+              }
+            },
+          },
+          {
+            id: "etherealVolley",
+            once: true,
+            // Only meaningful if the archer is unlocked.
+            available: (s) =>
+              !s.pickedPerks.etherealVolley && s.unlocked.archer,
+            apply: (s) => {
+              s.pickedPerks.etherealVolley = true;
+            },
+          },
+          {
+            id: "soulTide",
+            once: true,
+            // Needs at least 2 class unlocks to show up — i.e. real army
+            // diversity exists for deaths to ripple through.
+            available: (s) => {
+              if (s.pickedPerks.soulTide) return false;
+              const u = s.unlocked;
+              const count =
+                (u.archer ? 1 : 0) +
+                (u.mage ? 1 : 0) +
+                (u.knight ? 1 : 0) +
+                (u.assassin ? 1 : 0) +
+                (u.berserker ? 1 : 0);
+              return count >= 2;
+            },
+            apply: (s) => {
+              s.pickedPerks.soulTide = true;
             },
           },
         ];
@@ -1977,6 +2270,7 @@
         }
         function updateMinion(m) {
           if (m.hp <= 0) return;
+          m.age++;
           const LEASH = 180;
           if (
             !m.target ||
@@ -2024,9 +2318,53 @@
                     speed: (m.projSpeed || 5) * state.perks.projSpeed,
                     friendly: true,
                     from: "minion",
+                    owner: m, // credits the kill back to this minion
                   });
+                  // Ethereal Volley: archers fork a second projectile at
+                  // ±20° spread when the synergy perk is taken.
+                  if (state.pickedPerks.etherealVolley && m.kind === "archer") {
+                    const dx = m.target.x - m.x;
+                    const dy = m.target.y - m.y;
+                    const ang = Math.atan2(dy, dx) + (20 * Math.PI) / 180;
+                    const dlen = Math.hypot(dx, dy) || 1;
+                    const fakeTx = {
+                      x: m.x + Math.cos(ang) * dlen,
+                      y: m.y + Math.sin(ang) * dlen,
+                      hp: 1,
+                    };
+                    state.projectiles.push({
+                      x: m.x,
+                      y: m.y,
+                      tx: m.target, // still homes on the same target
+                      dmg: dmg * 0.7,
+                      color: m.projColor || "#a8ff90",
+                      speed: (m.projSpeed || 5) * state.perks.projSpeed,
+                      friendly: true,
+                      from: "minion",
+                      owner: m,
+                    });
+                  }
+                  // Mage gets a visible nova ring at the cast site so the
+                  // class reads as categorically different from warrior.
+                  if (m.kind === "mage") {
+                    state.fx.push({
+                      kind: "nova",
+                      x: m.x,
+                      y: m.y,
+                      r: 0,
+                      rMax: 40,
+                      life: 30,
+                      lifeMax: 30,
+                    });
+                  }
                 } else {
+                  const wasAlive = m.target.hp > 0;
                   m.target.hp -= dmg;
+                  if (wasAlive && m.target.hp <= 0) {
+                    m.target._lastHitBy = m;
+                  } else if (wasAlive) {
+                    m.target._lastHitBy = m;
+                  }
                   float(
                     m.target.x,
                     m.target.y,
@@ -2103,7 +2441,13 @@
             dy = p.tx.y - p.y;
           const d = Math.hypot(dx, dy) || 1;
           if (d < 6) {
+            const wasAlive = p.tx.hp > 0;
             p.tx.hp -= p.dmg;
+            // Credit the kill to the originating minion if any. The enemy
+            // filter reads _lastHitBy to bump m.kills.
+            if (wasAlive && p.friendly && p.owner && p.owner.hp > 0) {
+              p.tx._lastHitBy = p.owner;
+            }
             float(
               p.tx.x,
               p.tx.y,
@@ -2161,14 +2505,33 @@
             }
           }
 
-          for (const m of state.minions) updateMinion(m);
-          for (const e of state.enemies) updateEnemy(e);
-          for (const p of state.projectiles) updateProjectile(p);
+          // Hit-stop guard: ONLY pauses unit/projectile motion. Embers,
+          // soul-magnet, fx tick, spawn cooldowns, and summon timers all
+          // keep ticking — otherwise a 12-tick boss freeze (200 ms) makes
+          // ember drift and magnet pull visibly stutter.
+          const moving = state.hitstop <= 0;
+          if (moving) {
+            for (const m of state.minions) updateMinion(m);
+            for (const e of state.enemies) updateEnemy(e);
+            for (const p of state.projectiles) updateProjectile(p);
+          }
+          if (state.hitstop > 0) state.hitstop--;
+          if (state.shake > 0) state.shake *= 0.85;
+          if (state.shake < 0.2) state.shake = 0;
+
+          // Tick down summon-reveal cards regardless of hit-stop.
+          for (const card of state.summonQueue) card.life--;
+          state.summonQueue = state.summonQueue.filter((c) => c.life > 0);
 
           state.enemies = state.enemies.filter((e) => {
             if (e.hp <= 0) {
               state.kills++;
               gainXp(e.soul);
+              // Credit the killing blow to the responsible minion (if any)
+              // — this is what makes the death-log epitaph mean something.
+              if (e._lastHitBy && e._lastHitBy.hp > 0) {
+                e._lastHitBy.kills++;
+              }
               state.pickups.push({
                 x: e.x,
                 y: e.y,
@@ -2176,7 +2539,15 @@
                 value: e.soul,
               });
               float(e.x, e.y - 10, "+" + e.soul + "xp", "#ffe080");
-              const burstN = e.kindId === "boss" ? 22 : 7;
+              // Hit-stop + screen-shake on every kill. Only motion is paused
+              // (see update() guard) — embers/fx/magnet keep ticking.
+              const isBoss = e.kindId === "boss";
+              state.hitstop = Math.max(state.hitstop, isBoss ? 12 : 3);
+              state.shake = Math.min(
+                24,
+                state.shake + (isBoss ? 18 : 2.5 * (e.scale || 1)),
+              );
+              const burstN = isBoss ? 22 : 7;
               const burstColor = e.color || "#c84040";
               for (let i = 0; i < burstN; i++) {
                 const ang = Math.random() * Math.PI * 2;
@@ -2192,7 +2563,7 @@
                   color: burstColor,
                 });
               }
-              if (e.kindId === "boss") {
+              if (isBoss) {
                 state.won = true;
                 state.over = true;
                 banner(L.bannerVictory, "#80c850");
@@ -2205,15 +2576,34 @@
           });
           state.minions = state.minions.filter((m) => {
             if (m.hp <= 0) {
+              const ageSec = Math.floor(m.age / TICK_HZ);
+              const epitaph = L.epitaphTier ? L.epitaphTier(m.kills | 0) : "";
               log(
                 L.logMinionDeath(
                   m.name,
                   L.backstories[m.storyId] || "",
                   m.kills,
+                  ageSec,
+                  epitaph,
                 ),
                 "#a86060",
               );
               float(m.x, m.y, "☠ " + m.name, "#a86060");
+              // Within-run record so the Run Summary / Hall has data even
+              // before the run ends. Drained into meta.fallen via finishRun.
+              state.fallenThisRun.push({
+                name: m.name,
+                kind: m.kind,
+                kills: m.kills | 0,
+                ageSec,
+                storyId: m.storyId | 0,
+              });
+              // Soul Tide: any minion death + perk taken → permanent run-wide
+              // dmg bump on state.perks.dmg, capped at 5 stacks.
+              if (state.pickedPerks.soulTide && state.soulTideStacks < 5) {
+                state.perks.dmg *= 1.05;
+                state.soulTideStacks++;
+              }
               return false;
             }
             return true;
@@ -2308,7 +2698,7 @@
                 ctx.drawImage(
                   IMG.dungeon,
                   0,
-                  600,
+                  0,
                   slice,
                   slice,
                   x,
@@ -2491,6 +2881,15 @@
           );
         }
         function render() {
+          // Screen shake — translate the whole world frame, but NOT the HUD
+          // (which is drawn after the matching restore). The shake is also
+          // applied to drawBg so the dungeon tiles wobble with the impact.
+          const shakeX =
+            state.shake > 0 ? (Math.random() - 0.5) * state.shake : 0;
+          const shakeY =
+            state.shake > 0 ? (Math.random() - 0.5) * state.shake : 0;
+          ctx.save();
+          if (shakeX || shakeY) ctx.translate(shakeX, shakeY);
           drawBg();
           drawEmbers(performance.now());
           ctx.textAlign = "center";
@@ -2522,6 +2921,36 @@
             const x = worldX(m.x),
               y = worldY(m.y);
             dropShadow(x, y, 11);
+            // Survivor Bond age-ring: rendered BEFORE the sprite so it
+            // sits beneath. Tiers fire on real-time seconds (m.age is in
+            // 60 Hz logical ticks, not rAF frames — so this is monitor-rate
+            // independent).
+            const ageSec = m.age / TICK_HZ;
+            if (ageSec >= 30) {
+              const ringR = 16;
+              let ringAlpha = 0.35;
+              let ringColor = "#d8d4c8";
+              if (ageSec >= 90) {
+                ringColor = "#ffd060";
+                ringAlpha = 0.7;
+              } else if (ageSec >= 60) {
+                ringAlpha = 0.55;
+              }
+              ctx.save();
+              ctx.strokeStyle = ringColor;
+              ctx.globalAlpha = ringAlpha;
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.arc(x, y, ringR, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+              if (ageSec >= 90) {
+                ctx.font = "10px monospace";
+                ctx.fillStyle = "#ffd060";
+                ctx.textAlign = "center";
+                ctx.fillText("★", x, y - 32);
+              }
+            }
             const sheet =
               m.tint && TINTS[m.tint]
                 ? TINTS[m.tint]
@@ -2555,6 +2984,7 @@
             }
             hpBar(x, y - 22, 24, m.hp / m.hpMax, "#80c850");
             ctx.font = "9px monospace";
+            ctx.textAlign = "center";
             ctx.fillStyle = "rgba(0,0,0,0.85)";
             ctx.fillText(m.name.split(" ")[0], x + 1, y - 25);
             ctx.fillStyle = "rgba(232,224,200,0.9)";
@@ -2704,6 +3134,8 @@
 
           drawVignette();
 
+          ctx.restore(); // end shake transform — HUD draws unmoved
+
           ctx.fillStyle = "rgba(200,64,64,0.7)";
           for (const e of state.enemies) {
             if (inView(e, -20)) continue;
@@ -2719,6 +3151,50 @@
           }
 
           drawFixedHud();
+
+          // ----------------------------------------------------------------
+          // Summon Reveal Card — slides in at top-center for newly-summoned
+          // minions so the name + backstory actually register at the moment
+          // of birth (the log line scrolls past unread mid-combat).
+          // Skipped while the touch joystick is active; the joystick is
+          // drag-anywhere, so any fixed placement risks overlap on mobile.
+          // ----------------------------------------------------------------
+          if (state.summonQueue.length && !state.touch.active) {
+            const card = state.summonQueue[0];
+            const cardW = Math.min(280, Math.floor(VW * 0.7));
+            const cardH = 44;
+            // Slide-in: ease over the first 12 ticks, hold, ease out last 12.
+            const t01 = 1 - card.life / card.lifeMax;
+            let slideY = 0;
+            if (t01 < 0.12) {
+              slideY = (1 - t01 / 0.12) * -cardH;
+            } else if (card.life < 12) {
+              slideY = (1 - card.life / 12) * -cardH;
+            }
+            const cx = VW / 2 - cardW / 2;
+            const cy = 36 + slideY;
+            ctx.save();
+            ctx.fillStyle = "rgba(13,13,18,0.85)";
+            ctx.fillRect(cx, cy, cardW, cardH);
+            ctx.strokeStyle = "rgba(184,152,96,0.5)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(cx + 0.5, cy + 0.5, cardW - 1, cardH - 1);
+            ctx.textAlign = "left";
+            ctx.font = "bold 12px monospace";
+            ctx.fillStyle = "#d8c890";
+            const label = (L.minions && L.minions[card.kind]) || card.kind;
+            ctx.fillText(`${label} · ${card.name}`, cx + 8, cy + 17);
+            ctx.font = "italic 10px monospace";
+            ctx.fillStyle = "rgba(184,152,96,0.85)";
+            // truncate long stories so they fit one line
+            let story = card.story || "";
+            const maxChars = Math.floor(cardW / 5.4);
+            if (story.length > maxChars) {
+              story = story.slice(0, maxChars - 1) + "…";
+            }
+            ctx.fillText(story, cx + 8, cy + 33);
+            ctx.restore();
+          }
 
           if (!ready) {
             ctx.fillStyle = "rgba(0,0,0,0.7)";
@@ -2763,8 +3239,29 @@
         // ============================================================
         // BOOT
         // ============================================================
-        function loop() {
-          update();
+        // Fixed-timestep game loop driven by wall-clock time.
+        // Without this, state.tick advances once per rAF — so on 120 Hz
+        // monitors the 5-min run finishes in 2.5 min, enemies spawn 2x as
+        // fast, and the emotional-arc pacing is destroyed. update() now runs
+        // at exactly 60 logical ticks per real second regardless of refresh.
+        const TICK_HZ = 60;
+        const TICK_MS = 1000 / TICK_HZ;
+        const MAX_CATCHUP = 8; // cap update() catchup steps per frame
+        let _lastFrame = 0;
+        let _accum = 0;
+        function loop(now) {
+          if (!_lastFrame) _lastFrame = now;
+          let dt = now - _lastFrame;
+          _lastFrame = now;
+          if (dt > 250) dt = 250; // tab-throttle / breakpoint guard
+          _accum += dt;
+          let steps = 0;
+          while (_accum >= TICK_MS && steps < MAX_CATCHUP) {
+            update();
+            _accum -= TICK_MS;
+            steps++;
+          }
+          if (steps >= MAX_CATCHUP) _accum = 0; // drop excess
           render();
           requestAnimationFrame(loop);
         }
@@ -2773,7 +3270,7 @@
         log(L.logReady, "#b89860");
         log(L.logHelp, "#8888c8");
         updatePanel();
-        loop();
+        requestAnimationFrame(loop);
       })();
     </script>
   </body>

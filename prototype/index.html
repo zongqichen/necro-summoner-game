@@ -1925,6 +1925,69 @@
           return true;
         }
 
+        // Summon a specific kind RIGHT NOW. Used by the Unlock-class perks
+        // so picking "Unlock Archer" doesn't feel like nothing happened just
+        // because the army is already full of warriors. If at cap, evict the
+        // oldest non-matching minion to make room.
+        function summonKindNow(kind) {
+          if (!MINION_KINDS[kind]) return false;
+          if (state.minions.length >= state.maxMinions) {
+            // Find the oldest minion of a different kind to retire.
+            let victim = -1,
+              bestAge = -1;
+            for (let i = 0; i < state.minions.length; i++) {
+              const v = state.minions[i];
+              if (v.kind === kind) continue;
+              if ((v.age | 0) > bestAge) {
+                bestAge = v.age | 0;
+                victim = i;
+              }
+            }
+            if (victim >= 0) {
+              const v = state.minions[victim];
+              v.hp = 0; // let the death filter log + record permadeath
+            }
+          }
+          const t = MINION_KINDS[kind];
+          const id = makeName();
+          const hasFortress =
+            state.pickedPerks.boneFortress &&
+            (t.attack === "melee" || !t.attack);
+          const hpMax = hasFortress ? Math.floor(t.hp * 1.3) : t.hp;
+          const m = {
+            kind,
+            ...t,
+            hp: hpMax,
+            hpMax: hpMax,
+            x: state.player.x + (Math.random() - 0.5) * 40,
+            y: state.player.y + (Math.random() - 0.5) * 40,
+            cd: 0,
+            target: null,
+            facing: "right",
+            moving: false,
+            name: id.full,
+            storyId: id.storyId,
+            kills: 0,
+            age: 0,
+          };
+          state.minions.push(m);
+          log(
+            L.logSummon(L.minions[kind], id.full, L.backstories[id.storyId]),
+            "#b89860",
+          );
+          state.summonQueue.push({
+            kind,
+            name: id.full,
+            story: L.backstories[id.storyId] || "",
+            life: 102,
+            lifeMax: 102,
+          });
+          if (state.summonQueue.length > 2) {
+            state.summonQueue.splice(0, state.summonQueue.length - 2);
+          }
+          return true;
+        }
+
         // ============================================================
         // PERKS / LEVELUP
         // ============================================================
@@ -1999,6 +2062,7 @@
             available: (s) => !s.unlocked.archer,
             apply: (s) => {
               s.unlocked.archer = true;
+              summonKindNow("archer");
             },
           },
           {
@@ -2007,6 +2071,7 @@
             available: (s) => !s.unlocked.mage,
             apply: (s) => {
               s.unlocked.mage = true;
+              summonKindNow("mage");
             },
           },
           {
@@ -2015,6 +2080,7 @@
             available: (s) => !s.unlocked.knight,
             apply: (s) => {
               s.unlocked.knight = true;
+              summonKindNow("knight");
             },
           },
           {
@@ -2023,6 +2089,7 @@
             available: (s) => !s.unlocked.assassin,
             apply: (s) => {
               s.unlocked.assassin = true;
+              summonKindNow("assassin");
             },
           },
           {
@@ -2031,6 +2098,7 @@
             available: (s) => !s.unlocked.berserker,
             apply: (s) => {
               s.unlocked.berserker = true;
+              summonKindNow("berserker");
             },
           },
           // -----------------------------------------------------------------
